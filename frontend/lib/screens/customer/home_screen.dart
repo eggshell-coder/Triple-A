@@ -1,4 +1,4 @@
-// home_screen.dart
+// lib/screens/customer/home_screen.dart
 // Layout:
 // 1. Navbar at the very top
 // 2. MEN'S / WOMEN'S showcase
@@ -6,7 +6,6 @@
 // 4. Featured products
 // 5. Footer with TRIPLE A + tagline + social/contact icons
 
-// lib/screens/customer/home_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -94,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF8F5F0),
       body: CustomScrollView(
         slivers: [
+          // Navbar always on top
           SliverAppBar(
             pinned: true,
             backgroundColor: Colors.white,
@@ -104,9 +104,13 @@ class _HomeScreenState extends State<HomeScreen> {
               background: AppNavBar(),
             ),
           ),
+
+          // MEN'S / WOMEN'S
           const SliverToBoxAdapter(
             child: _GenderBannerSection(),
           ),
+
+          // COLLECTIONS
           SliverToBoxAdapter(
             child: _CollectionCarouselSection(
               collections: _collections,
@@ -116,15 +120,20 @@ class _HomeScreenState extends State<HomeScreen> {
               onPageChanged: (i) => setState(() => _carouselIndex = i),
             ),
           ),
+
+          // FEATURED PRODUCTS
           SliverToBoxAdapter(
             child: _ProductShowcaseSection(
               products: _featuredProducts,
               loading: _loadingProducts,
             ),
           ),
+
+          // FOOTER
           const SliverToBoxAdapter(
             child: _FooterSection(),
           ),
+
           const SliverToBoxAdapter(
             child: SizedBox(height: 20),
           ),
@@ -134,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// ── Men / Women Banners ────────────────────────────────────────────────────
 class _GenderBannerSection extends StatelessWidget {
   const _GenderBannerSection();
 
@@ -148,7 +158,6 @@ class _GenderBannerSection extends StatelessWidget {
               label: "MEN'S",
               gender: 'men',
               color: const Color(0xFF2D2D2D),
-              imagePath: 'images/mens_bg.jpg',
             ),
           ),
           const SizedBox(width: 12),
@@ -157,7 +166,6 @@ class _GenderBannerSection extends StatelessWidget {
               label: "WOMEN'S",
               gender: 'women',
               color: const Color(0xFF8B5A6B),
-              imagePath: 'images/womens_bg.jpg',
             ),
           ),
         ],
@@ -170,28 +178,32 @@ class _GenderBanner extends StatelessWidget {
   final String label;
   final String gender;
   final Color color;
-  final String imagePath;
 
   const _GenderBanner({
     required this.label,
     required this.gender,
     required this.color,
-    required this.imagePath,
   });
 
   @override
   Widget build(BuildContext context) {
+    // ── Direct GitHub URLs for high reliability ──
+    final String imageUrl = gender == 'men'
+        ? 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/mens_bg.jpg'
+        : 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/womens_bg.jpg';
+
     return GestureDetector(
       onTap: () => context.go('/products?gender=$gender'),
       child: Container(
         height: 200,
         decoration: BoxDecoration(
+          color: color, // Fallback color
           borderRadius: BorderRadius.circular(12),
           image: DecorationImage(
-            image: AssetImage(imagePath),
+            image: NetworkImage(imageUrl),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.35),
+              Colors.black.withOpacity(0.4),
               BlendMode.darken,
             ),
           ),
@@ -241,6 +253,7 @@ class _GenderBanner extends StatelessWidget {
   }
 }
 
+// ── Collection Carousel ────────────────────────────────────────────────────
 class _CollectionCarouselSection extends StatelessWidget {
   final List<dynamic> collections;
   final bool loading;
@@ -446,6 +459,7 @@ class _CollectionSlide extends StatelessWidget {
   }
 }
 
+// ── Product Showcase ───────────────────────────────────────────────────────
 class _ProductShowcaseSection extends StatelessWidget {
   final List<dynamic> products;
   final bool loading;
@@ -603,6 +617,7 @@ class _HomeProductCard extends StatelessWidget {
   }
 }
 
+// ── Footer ─────────────────────────────────────────────────────────────────
 class _FooterSection extends StatelessWidget {
   const _FooterSection();
 
