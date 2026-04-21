@@ -1,4 +1,4 @@
-// home_screen.dart — UPDATED AGAIN
+// lib/screens/customer/home_screen.dart
 // Layout:
 // 1. Navbar at the very top
 // 2. MEN'S / WOMEN'S showcase
@@ -187,13 +187,26 @@ class _GenderBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── Direct GitHub URLs for high reliability ──
+    final String imageUrl = gender == 'men'
+        ? 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/mens_bg.jpg'
+        : 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/womens_bg.jpg';
+
     return GestureDetector(
       onTap: () => context.go('/products?gender=$gender'),
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-          color: color,
+          color: color, // Fallback color
           borderRadius: BorderRadius.circular(12),
+          image: DecorationImage(
+            image: NetworkImage(imageUrl),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.4),
+              BlendMode.darken,
+            ),
+          ),
         ),
         alignment: Alignment.bottomLeft,
         padding: const EdgeInsets.all(20),
@@ -208,6 +221,13 @@ class _GenderBanner extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 3,
+                shadows: [
+                  Shadow(
+                    color: Colors.black45,
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 6),
@@ -658,7 +678,7 @@ class _FooterSocialIcon extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white10,
           shape: BoxShape.circle,
         ),
