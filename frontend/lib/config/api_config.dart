@@ -2,7 +2,7 @@
 
 class ApiConfig {
   // Backend runs on port 5000 via .env, routes mounted under /api
-  static const String baseUrl = 'https://triple-a-gkpq.onrender.com';
+  static const String baseUrl = 'https://triple-a-gkpq.onrender.com/api';
 
   // Endpoints
   static const String login = '$baseUrl/auth/login';
