@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Triple A Clothing Store">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Triple A">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Triple A – Clothing Store</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!--
+    OAuth Callback URL Rewriter
+    ============================
+    go_router 14.x throws an assertion crash (match.dart:235) when it receives
+    a URL like /auth/callback?error=...&error_code=... because the nested path
+    segment causes an internal path-matching failure DURING URL PARSING —
+    before any Dart redirect() or onException() hook can run.
+
+    The ONLY reliable fix is to rewrite the URL at the browser level, before
+    Flutter even initialises. This script runs synchronously in <head>, so it
+    fires before flutter_bootstrap.js loads.
+
+    It rewrites:
+      /auth/callback?foo=bar#baz=qux
+    to:
+      /oauth-callback?foo=bar&baz=qux
+
+    Params from both the query string AND the hash fragment are merged,
+    because Supabase sometimes puts error info in the fragment.
+  -->
+  <script>
+    (function () {
+      var loc = window.location;
+      if (loc.pathname !== '/auth/callback') return;
+
+      // Collect params from query string
+      var params = {};
+      var search = loc.search ? loc.search.slice(1) : '';
+      if (search) {
+        search.split('&').forEach(function (p) {
+          var kv = p.split('=');
+          if (kv[0]) params[kv[0]] = kv[1] || '';
+        });
+      }
+
+      // Also collect params from hash fragment (Supabase uses both)
+      var hash = loc.hash ? loc.hash.slice(1) : '';
+      if (hash) {
+        hash.split('&').forEach(function (p) {
+          var kv = p.split('=');
+          if (kv[0]) params[kv[0]] = kv[1] || '';
+        });
+      }
+
+      // Build new query string
+      var pairs = Object.keys(params).map(function (k) {
+        return k + '=' + params[k];
+      });
+      var newUrl = '/oauth-callback' + (pairs.length ? '?' + pairs.join('&') : '');
+
+      // Replace current history entry so the back button doesn't loop
+      window.history.replaceState(null, '', newUrl);
+    })();
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

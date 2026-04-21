@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter Web (port 3000)",
+      "type": "dart",
+      "request": "launch",
+      "program": "frontend/lib/main.dart",
+      "args": [
+        "-d", "chrome",
+        "--web-port", "3000"
+      ]
+    },
+    {
+      "name": "Backend (Node)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/src/server.js",
+      "envFile": "${workspaceFolder}/backend/.env"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack",
+      "configurations": ["Flutter Web (port 3000)", "Backend (Node)"]
+    }
+  ]
+}
