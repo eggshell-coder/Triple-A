@@ -48,12 +48,18 @@ const adminGetCollections = async (req, res) => {
 
 // ── POST /api/admin/collections ───────────────────────────────────────────
 const createCollection = async (req, res) => {
-  const { name, slug, description, image, display_order } = req.body;
+  // Support both 'image'/'display_order' (backend style) and 'image_url'/'sort_order' (flutter style)
+  const name          = req.body.name;
+  const slug          = req.body.slug;
+  const description   = req.body.description;
+  const image         = req.body.image || req.body.image_url;
+  const display_order = req.body.display_order || req.body.sort_order || 0;
+
   if (!name || !slug) return res.status(400).json({ error: 'name and slug are required' });
 
   const { data, error } = await supabase
     .from('collections')
-    .insert({ name, slug, description, image, display_order: display_order || 0 })
+    .insert({ name, slug, description, image, display_order })
     .select()
     .single();
 
@@ -63,11 +69,29 @@ const createCollection = async (req, res) => {
 
 // ── PUT /api/admin/collections/:id ────────────────────────────────────────
 const updateCollection = async (req, res) => {
-  const allowed = ['name','slug','description','image','is_active','display_order'];
+  // This list includes the names Flutter uses (image_url, sort_order)
+  const allowed = ['name', 'slug', 'description', 'image', 'image_url', 'is_active', 'display_order', 'sort_order'];
   const updates = {};
+
   for (const key of allowed) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
+    if (req.body[key] !== undefined) {
+      // Map Flutter's 'image_url' to Database's 'image'
+      if (key === 'image_url') {
+        updates['image'] = req.body[key];
+      } 
+      // Map Flutter's 'sort_order' to Database's 'display_order'
+      else if (key === 'sort_order') {
+        updates['display_order'] = req.body[key];
+      } 
+      else {
+        updates[key] = req.body[key];
+      }
+    }
   }
+
+  // Prevent sending redundant fields if both were somehow provided
+  delete updates['image_url'];
+  delete updates['sort_order'];
 
   const { data, error } = await supabase
     .from('collections')
@@ -79,6 +103,7 @@ const updateCollection = async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   return res.json({ success: true, data });
 };
+
 
 // ── DELETE /api/admin/collections/:id ────────────────────────────────────
 const deleteCollection = async (req, res) => {
