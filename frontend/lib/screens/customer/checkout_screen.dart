@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
@@ -21,6 +22,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _phoneCtrl   = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _notesCtrl   = TextEditingController();
+
+  // Generated once when the screen opens; reused on every retry so the backend
+  // can deduplicate a double-tap or network-retry into a single order.
+  late final String _idempotencyKey = const Uuid().v4();
 
   String? _selectedDistrict;
   String? _selectedUpazila;
@@ -71,11 +76,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           'upazila':      _selectedUpazila!,
           'address_line': _addressCtrl.text.trim(),
         },
-        items:    items,
-        note:     _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-        district: _selectedDistrict,
-        upazila:  _selectedUpazila,
-        userId:   user.userId,
+        items:          items,
+        note:           _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+        district:       _selectedDistrict,
+        upazila:        _selectedUpazila,
+        userId:         user.userId,
+        idempotencyKey: _idempotencyKey,
       );
 
       ref.read(cartProvider.notifier).clear();

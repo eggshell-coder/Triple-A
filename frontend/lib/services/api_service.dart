@@ -409,10 +409,14 @@ class ApiService {
     String? upazila,
     double deliveryCharge = 0,
     String? userId,
+    String? idempotencyKey,
   }) async {
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (idempotencyKey != null) headers['Idempotency-Key'] = idempotencyKey;
+
     final res = await http.post(
       Uri.parse(ApiConfig.orders),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode({
         'customer': customer,
         'items': items,
