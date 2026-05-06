@@ -11,14 +11,23 @@ const placeOrder = async (req, res) => {
     user_id,
   } = req.body;
 
-  // Read idempotency key from header (generated once per checkout screen open)
-  const idempotencyKey = req.headers['idempotency-key'] || null;
+  // req.get() is Express's canonical header accessor — case-insensitive,
+  // works correctly regardless of how the proxy normalises header names.
+  const idempotencyKey = req.get('Idempotency-Key');
 
-  const fullName   = customer?.full_name   ?? req.body.full_name;
-  const phone      = customer?.phone       ?? req.body.phone;
-  const district   = customer?.district    ?? req.body.district;
-  const upazila    = customer?.upazila     ?? req.body.upazila;
+  if (!idempotencyKey) {
+    return res.status(400).json({
+      success: false,
+      message: 'Idempotency-Key header is required',
+    });
+  }
+
+  const fullName    = customer?.full_name    ?? req.body.full_name;
+  const phone       = customer?.phone        ?? req.body.phone;
+  const district    = customer?.district     ?? req.body.district;
+  const upazila     = customer?.upazila      ?? req.body.upazila;
   const addressLine = customer?.address_line ?? req.body.address_line;
+  const email       = customer?.email        ?? null;
 
   if (!items?.length) return res.status(400).json({ success: false, error: 'items are required' });
   if (!fullName || !phone || !district || !upazila || !addressLine) {
@@ -28,24 +37,25 @@ const placeOrder = async (req, res) => {
     });
   }
 
+  // Temporary debug log — remove after confirming smoke test passes
+  console.log('ORDER IDEMPOTENCY KEY:', idempotencyKey);
+
   // Delegate the entire transaction to a Postgres RPC so it runs atomically.
-  // The function handles stock checks, customer insert, order insert, item inserts,
-  // stock decrement, and idempotency deduplication — all in one transaction.
   const { data, error } = await supabase.rpc('place_order_atomic', {
+    p_idempotency_key: idempotencyKey,
+    p_user_id:         user_id || null,
     p_full_name:       fullName,
     p_phone:           phone,
     p_district:        district,
     p_upazila:         upazila,
     p_address_line:    addressLine,
-    p_items:           items,
+    p_email:           email,
     p_delivery_charge: Number(delivery_charge),
     p_note:            note || null,
-    p_user_id:         user_id || null,
-    p_idempotency_key: idempotencyKey,
+    p_items:           items,
   });
 
   if (error) {
-    // Map Postgres-raised application errors to clean HTTP responses
     const msg = error.message || '';
     if (msg.startsWith('OUT_OF_STOCK:'))    return res.status(409).json({ success: false, error: msg });
     if (msg.startsWith('INVALID_QUANTITY:')) return res.status(400).json({ success: false, error: msg });
@@ -55,18 +65,13 @@ const placeOrder = async (req, res) => {
   // Normalize: RPC may return an array with one row or an object directly
   const result = Array.isArray(data) ? data[0] : data;
 
-  if (result?.duplicate) {
-    // Idempotent replay — same order already exists, return it
-    return res.status(200).json({
-      success:   true,
-      duplicate: true,
-      data:      { order_id: result.order_id, total_amount: result.total_amount },
-    });
-  }
-
-  return res.status(201).json({
-    success: true,
-    data:    { order_id: result.order_id, total_amount: result.total_amount },
+  return res.status(result.duplicate ? 200 : 201).json({
+    success:   true,
+    duplicate: result.duplicate ?? false,
+    data: {
+      order_id:     result.order_id,
+      total_amount: result.total_amount,
+    },
   });
 };
 
