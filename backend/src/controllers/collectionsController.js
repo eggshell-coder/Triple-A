@@ -1,8 +1,19 @@
-// collection.controller.js  (updated — now primary content feature)
+// src/controllers/collectionsController.js
 const supabase = require('../config/supabase');
+const { collectionsCache } = require('../utils/cache');
 
-// ── GET /api/collections  (public — active only, ordered) ────────────────
+const CACHE_CONTROL_PUBLIC = 'public, max-age=300, stale-while-revalidate=600';
+
+const invalidateCollectionsCache = () => collectionsCache.clear();
+
+// ── GET /api/collections  (public — active only, ordered) ────────────────────
 const getCollections = async (req, res) => {
+  const cached = collectionsCache.get('all');
+  if (cached) {
+    res.set('Cache-Control', CACHE_CONTROL_PUBLIC);
+    return res.json({ success: true, data: cached });
+  }
+
   const { data, error } = await supabase
     .from('collections')
     .select('id, name, slug, description, image')
@@ -10,15 +21,26 @@ const getCollections = async (req, res) => {
     .order('display_order', { ascending: true });
 
   if (error) return res.status(500).json({ error: error.message });
+
+  collectionsCache.set('all', data || []);
+  res.set('Cache-Control', CACHE_CONTROL_PUBLIC);
   return res.json({ success: true, data: data || [] });
 };
 
-// ── GET /api/collections/:slug/products  (public) ────────────────────────
+// ── GET /api/collections/:slug/products  (public) ────────────────────────────
 const getCollectionBySlug = async (req, res) => {
+  const { slug } = req.params;
+
+  const cached = collectionsCache.get(slug);
+  if (cached) {
+    res.set('Cache-Control', CACHE_CONTROL_PUBLIC);
+    return res.json({ success: true, data: cached });
+  }
+
   const { data: collection, error: colErr } = await supabase
     .from('collections')
     .select('id, name, slug, description, image')
-    .eq('slug', req.params.slug)
+    .eq('slug', slug)
     .eq('is_active', true)
     .single();
 
@@ -32,10 +54,14 @@ const getCollectionBySlug = async (req, res) => {
     .order('created_at', { ascending: false });
 
   if (prodErr) return res.status(500).json({ error: prodErr.message });
-  return res.json({ success: true, data: { collection, products: products || [] } });
+
+  const payload = { collection, products: products || [] };
+  collectionsCache.set(slug, payload);
+  res.set('Cache-Control', CACHE_CONTROL_PUBLIC);
+  return res.json({ success: true, data: payload });
 };
 
-// ── GET /api/admin/collections  (admin — all including inactive) ──────────
+// ── GET /api/collections/admin/all  (admin — all including inactive) ──────────
 const adminGetCollections = async (req, res) => {
   const { data, error } = await supabase
     .from('collections')
@@ -46,9 +72,8 @@ const adminGetCollections = async (req, res) => {
   return res.json({ success: true, data: data || [] });
 };
 
-// ── POST /api/admin/collections ───────────────────────────────────────────
+// ── POST /api/collections  (admin) ───────────────────────────────────────────
 const createCollection = async (req, res) => {
-  // Support both 'image'/'display_order' (backend style) and 'image_url'/'sort_order' (flutter style)
   const name          = req.body.name;
   const slug          = req.body.slug;
   const description   = req.body.description;
@@ -64,32 +89,23 @@ const createCollection = async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  invalidateCollectionsCache();
   return res.status(201).json({ success: true, data });
 };
 
-// ── PUT /api/admin/collections/:id ────────────────────────────────────────
+// ── PATCH /api/collections/:id  (admin) ──────────────────────────────────────
 const updateCollection = async (req, res) => {
-  // This list includes the names Flutter uses (image_url, sort_order)
-  const allowed = ['name', 'slug', 'description', 'image', 'image_url', 'is_active', 'display_order', 'sort_order'];
+  const allowed = ['name','slug','description','image','image_url','is_active','display_order','sort_order'];
   const updates = {};
 
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
-      // Map Flutter's 'image_url' to Database's 'image'
-      if (key === 'image_url') {
-        updates['image'] = req.body[key];
-      } 
-      // Map Flutter's 'sort_order' to Database's 'display_order'
-      else if (key === 'sort_order') {
-        updates['display_order'] = req.body[key];
-      } 
-      else {
-        updates[key] = req.body[key];
-      }
+      if (key === 'image_url')  { updates['image']         = req.body[key]; }
+      else if (key === 'sort_order') { updates['display_order'] = req.body[key]; }
+      else { updates[key] = req.body[key]; }
     }
   }
-
-  // Prevent sending redundant fields if both were somehow provided
   delete updates['image_url'];
   delete updates['sort_order'];
 
@@ -101,19 +117,21 @@ const updateCollection = async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  invalidateCollectionsCache();
   return res.json({ success: true, data });
 };
 
-
-// ── DELETE /api/admin/collections/:id ────────────────────────────────────
+// ── DELETE /api/collections/:id  (admin) ─────────────────────────────────────
 const deleteCollection = async (req, res) => {
-  // Products with this collection_id will be set to NULL via ON DELETE SET NULL
   const { error } = await supabase.from('collections').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
+
+  invalidateCollectionsCache();
   return res.json({ success: true, message: 'Collection deleted' });
 };
 
-// ── PUT /api/admin/collections/:id/toggle ────────────────────────────────
+// ── PUT /api/collections/:id/toggle  (admin) ─────────────────────────────────
 const toggleCollection = async (req, res) => {
   const { data: current } = await supabase
     .from('collections')
@@ -129,6 +147,8 @@ const toggleCollection = async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  invalidateCollectionsCache();
   return res.json({ success: true, data });
 };
 

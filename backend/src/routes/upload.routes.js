@@ -1,17 +1,20 @@
 // src/routes/upload.routes.js
 const express = require('express');
-const router = express.Router();
-const multer = require('multer');
-const { authenticate } = require('../middleware/auth.middleware');
-const { uploadImage } = require('../controllers/upload.controller');
+const router  = express.Router();
+const multer  = require('multer');
+const { requireAdmin } = require('../middleware/adminAuth');
+const { uploadImage }  = require('../controllers/upload.controller');
+
+// Pull upload rate-limiter registered in server.js
+const uploadLimiter = (req, res, next) => req.app.locals.uploadLimiter(req, res, next);
 
 // Store in memory buffer (sent directly to Supabase)
-const storage = multer.memoryStorage();
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (req, file, cb) => {
-    if (['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype)) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Only JPEG, PNG, WebP, or GIF images are allowed'));
@@ -19,6 +22,6 @@ const upload = multer({
   },
 });
 
-router.post('/', authenticate, upload.single('image'), uploadImage);
+router.post('/', uploadLimiter, requireAdmin, upload.single('image'), uploadImage);
 
 module.exports = router;

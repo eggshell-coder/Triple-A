@@ -1,6 +1,15 @@
 // src/controllers/upload.controller.js
+const crypto   = require('crypto');
 const supabase = require('../config/supabase');
 const { createError } = require('../middleware/error.middleware');
+
+// Whitelist: mimetype → canonical extension
+const MIME_TO_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+  'image/gif':  'gif',
+};
 
 /**
  * POST /api/upload
@@ -13,22 +22,27 @@ const uploadImage = async (req, res, next) => {
       return next(createError('No file uploaded', 400));
     }
 
-    const file = req.file;
-    const fileExt = file.originalname.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+    const file    = req.file;
+    const ext     = MIME_TO_EXT[file.mimetype];
+
+    if (!ext) {
+      return next(createError('Unsupported image type', 415));
+    }
+
+    // Unguessable filename — UUID, not random-based
+    const fileName = `${crypto.randomUUID()}.${ext}`;
     const filePath = `products/${fileName}`;
 
-    // Upload to Supabase Storage bucket "product-images"
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('product-images')
       .upload(filePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false,
+        contentType:  file.mimetype,
+        upsert:       false,
+        cacheControl: '31536000', // 1 year — immutable once written
       });
 
     if (error) return next(createError(`Storage error: ${error.message}`));
 
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from('product-images')
       .getPublicUrl(filePath);

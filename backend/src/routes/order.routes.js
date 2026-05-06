@@ -1,9 +1,9 @@
-// src/routes/order.routes.js — FIXED
+// src/routes/order.routes.js
 const express  = require('express');
 const router   = express.Router();
 const { body } = require('express-validator');
-const { validate }     = require('../middleware/validate.middleware');
-const { authenticate } = require('../middleware/auth.middleware');
+const { validate }      = require('../middleware/validate.middleware');
+const { requireAdmin }  = require('../middleware/adminAuth');
 const {
   placeOrder,
   trackOrder,
@@ -14,8 +14,12 @@ const {
   getProductOrdersSummary,
 } = require('../controllers/order.controller');
 
-// ── Public ─────────────────────────────────────────────────────────────────
+// Pull order rate-limiter registered in server.js
+const orderLimiter = (req, res, next) => req.app.locals.orderLimiter(req, res, next);
+
+// ── Public ────────────────────────────────────────────────────────────────────
 router.post('/',
+  orderLimiter,
   [
     body('customer.full_name').trim().notEmpty().withMessage('Full name required'),
     body('customer.phone').trim().notEmpty().withMessage('Phone number required'),
@@ -29,11 +33,12 @@ router.post('/',
 
 router.get('/track/:orderId', trackOrder);
 
-// ── Admin ───────────────────────────────────────────────────────────────────
-router.get('/product-summary', authenticate, getProductOrdersSummary);
-router.get('/',                authenticate, adminGetOrders);
-router.get('/:id',             authenticate, getOrderById);
-router.patch('/:id/status',    authenticate,
+// ── Admin ─────────────────────────────────────────────────────────────────────
+router.get('/revenue-summary',  requireAdmin, getRevenueSummary);
+router.get('/product-summary',  requireAdmin, getProductOrdersSummary);
+router.get('/',                 requireAdmin, adminGetOrders);
+router.get('/:id',              requireAdmin, getOrderById);
+router.patch('/:id/status',     requireAdmin,
   [body('status').notEmpty().withMessage('Status required'), validate],
   updateOrderStatus
 );

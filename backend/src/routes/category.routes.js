@@ -1,24 +1,24 @@
 // src/routes/category.routes.js
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const { body } = require('express-validator');
-const { validate } = require('../middleware/validate.middleware');
-const { authenticate } = require('../middleware/auth.middleware');
+const { validate }     = require('../middleware/validate.middleware');
+const { requireAdmin } = require('../middleware/adminAuth');
 const {
   getCategories, getAllCategoriesAdmin,
-  createCategory, updateCategory, deleteCategory
+  createCategory, updateCategory, deleteCategory,
 } = require('../controllers/category.controller');
 
-// Public
+// ── Public ────────────────────────────────────────────────────────────────────
 router.get('/', getCategories);
 
-// Admin
-router.get('/admin/all', authenticate, getAllCategoriesAdmin);
-router.post('/', authenticate,
+// ── Admin ─────────────────────────────────────────────────────────────────────
+router.get('/admin/all', requireAdmin, getAllCategoriesAdmin);
+router.post('/', requireAdmin,
   [body('name').trim().notEmpty().withMessage('Category name required'), validate],
   createCategory
 );
-router.patch('/:id', authenticate, updateCategory);
-router.delete('/:id', authenticate, deleteCategory);
+router.patch('/:id',  requireAdmin, updateCategory);
+router.delete('/:id', requireAdmin, deleteCategory);
 
 module.exports = router;
