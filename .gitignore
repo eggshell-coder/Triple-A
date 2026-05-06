@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Environment — never commit real env files
+backend/.env
+backend/.env.*
+# …but DO commit the documented example
+!backend/.env.example
+
+# Build artefacts
+build/
+dist/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
