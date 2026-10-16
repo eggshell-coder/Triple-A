@@ -47,8 +47,13 @@ jobs:
         run: npm test
 
   # ─────────────────────────────────────────────────────────────────────
-  # Dependency audit — separate job so it can run in parallel and so a
-  # new advisory does not block (or get lost inside) the test job.
+  # Dependency audit — separate job so it runs in parallel with the tests
+  # and so a new advisory is visible instead of hiding inside them.
+  #
+  # Gates on high/critical. This used to be continue-on-error because
+  # nodemon (dev-only) carried 3 high advisories with no sensible fix —
+  # swapping nodemon for Node's built-in `node --watch` cleared them, so
+  # the gate is now real.
   # ─────────────────────────────────────────────────────────────────────
   audit:
     name: Dependency audit
@@ -56,7 +61,6 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4

@@ -33,8 +33,16 @@ const fakeSupabase = {
   storage: { from: () => ({ upload: () => Promise.resolve({ error: null }) }) },
 };
 
+// Stub the Supabase client before server.js loads it.
+//
+// Two request strings must be intercepted. Modules inside src/controllers use
+// '../config/supabase', while src/server.js itself uses './config/supabase'.
+// Missing the second one meant the real client was constructed in CI, where
+// .env is absent (it is gitignored), and the suite died on startup.
 Module._load = function (request, parent, isMain) {
-  if (request === '../config/supabase') return fakeSupabase;
+  if (request === '../config/supabase' || request === './config/supabase') {
+    return fakeSupabase;
+  }
   return originalLoad.apply(this, arguments);
 };
 
