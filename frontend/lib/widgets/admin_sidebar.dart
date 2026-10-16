@@ -54,7 +54,7 @@ class AdminSidebar extends ConsumerWidget {
                 width: 36, height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                 ),
                 child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
               ),
@@ -99,7 +99,7 @@ class _NavItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: active ? Colors.white.withOpacity(0.12) : Colors.transparent,
+        color: active ? Colors.white.withValues(alpha: 0.12) : Colors.transparent,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(children: [

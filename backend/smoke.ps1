@@ -1,4 +1,17 @@
-$API_URL = "https://triple-a-gkpq.onrender.com"
+# Smoke test against a running Triple A API.
+#
+# Usage (local):
+#   $env:SMOKE_EMAIL="you@example.com"; $env:SMOKE_PASSWORD="your-password"
+#   .\smoke.ps1
+#
+# In CI these come from repository secrets, never from this file.
+param(
+  [string]$ApiUrl = $(if ($env:SMOKE_API_URL) { $env:SMOKE_API_URL } else { "http://localhost:5000" }),
+  [string]$Email  = $env:SMOKE_EMAIL,
+  [string]$Password = $env:SMOKE_PASSWORD
+)
+
+$API_URL = $ApiUrl
 
 Write-Host "API URL: $API_URL"
 
@@ -6,20 +19,24 @@ Write-Host "API URL: $API_URL"
 # If login fails, the script continues because /api/orders is public.
 $TOKEN = $null
 
-try {
-  $loginBody = @{
-    email    = "rinoyhasan5@gmail.com"
-    password = "123456"
-  } | ConvertTo-Json
+if ($Email -and $Password) {
+  try {
+    $loginBody = @{
+      email    = $Email
+      password = $Password
+    } | ConvertTo-Json
 
-  $login = Invoke-RestMethod -Method Post "$API_URL/api/auth/customer/login" `
-    -Headers @{ "Content-Type" = "application/json" } `
-    -Body $loginBody
+    $login = Invoke-RestMethod -Method Post "$API_URL/api/auth/customer/login" `
+      -Headers @{ "Content-Type" = "application/json" } `
+      -Body $loginBody
 
-  $TOKEN = $login.data.token
-  Write-Host "Got token."
-} catch {
-  Write-Host "Login failed or skipped. Continuing without token."
+    $TOKEN = $login.data.token
+    Write-Host "Got token."
+  } catch {
+    Write-Host "Login failed or skipped. Continuing without token."
+  }
+} else {
+  Write-Host "No SMOKE_EMAIL / SMOKE_PASSWORD set - running unauthenticated."
 }
 
 # Get one valid product

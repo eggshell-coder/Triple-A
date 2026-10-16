@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/responsive.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../providers/cart_provider.dart';
@@ -69,7 +70,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               ? Center(child: Text('Product not found', style: GoogleFonts.newsreader(fontSize: 20)))
               : SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+                    padding: Responsive.pagePadding(context),
                     child: isWide
                         ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             // Image
@@ -88,9 +89,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               },
                             )),
                           ])
-                        : Column(children: [
+                        : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                             _ProductImage(imageUrl: _product!.imageUrl),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 20),
                             _ProductInfo(
                               product: _product!,
                               quantity: _quantity,
@@ -116,14 +117,24 @@ class _ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: AspectRatio(
-        aspectRatio: 0.8,
-        child: imageUrl != null
-            ? Image.network(imageUrl!, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceLow))
-            : Container(color: AppColors.surfaceLow,
-                child: const Icon(Icons.image_outlined, size: 64, color: AppColors.outline)),
+      borderRadius: BorderRadius.circular(4),
+      // Capped height keeps the image from pushing the product name,
+      // price and Add to Cart button below the fold on phones.
+      child: SizedBox(
+        height: Responsive.detailImageHeight(context),
+        width: double.infinity,
+        child: imageUrl != null && imageUrl!.isNotEmpty
+            ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: AppColors.surfaceLow),
+              )
+            : Container(
+                color: AppColors.surfaceLow,
+                child: const Icon(Icons.image_outlined,
+                    size: 64, color: AppColors.outline),
+              ),
       ),
     );
   }
@@ -160,15 +171,16 @@ class _ProductInfo extends StatelessWidget {
       const SizedBox(height: 12),
       // Name
       Text(product.name, style: GoogleFonts.newsreader(
-        fontSize: 36, fontWeight: FontWeight.w400,
-        color: AppColors.onSurface, height: 1.1,
+        fontSize: Responsive.detailTitleSize(context), fontWeight: FontWeight.w400,
+        color: AppColors.onSurface, height: 1.15,
       )),
-      const SizedBox(height: 20),
+      const SizedBox(height: 12),
       // Price
       Text(
         '৳ ${product.price.toStringAsFixed(0)}',
         style: GoogleFonts.manrope(
-          fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.onSurface,
+          fontSize: Responsive.detailPriceSize(context),
+          fontWeight: FontWeight.w600, color: AppColors.onSurface,
         ),
       ),
       const SizedBox(height: 32),
@@ -265,7 +277,7 @@ class _QtyButton extends StatelessWidget {
     onTap: onTap,
     child: Container(
       width: 40, height: 40,
-      decoration: BoxDecoration(border: Border.all(color: AppColors.outlineVariant.withOpacity(0.5))),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5))),
       child: Icon(icon, size: 18, color: AppColors.onSurface),
     ),
   );

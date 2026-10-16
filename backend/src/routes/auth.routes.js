@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth.middleware');
 const {
   login, logout, refreshAdminToken,
   customerSignup, customerLogin,
+  resendConfirmation, customerSession,
   getMyOrders,
 } = require('../controllers/auth.controller');
 
@@ -34,9 +35,11 @@ router.post('/customer/signup',
   [
     body('email').isEmail().withMessage('Valid email required'),
     body('password')
-      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
-      .matches(/[0-9]/).withMessage('Password must contain at least one digit'),
+      // Must match kMinPasswordLength in
+      // frontend/lib/services/password_reset_service.dart and the
+      // "Minimum password length" setting in Supabase. If these disagree,
+      // users pass our form and are rejected with no useful message.
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('full_name').trim().notEmpty().withMessage('Name required'),
     validate,
   ],
@@ -47,6 +50,25 @@ router.post('/customer/login',
   loginLimiter,
   [body('email').isEmail(), body('password').notEmpty(), validate],
   customerLogin
+);
+
+// ── Email verification ───────────────────────────────────────────────────────
+// Re-send the "confirm your address" email after signup.
+router.post('/customer/resend-confirmation',
+  signupLimiter,
+  [
+    // Pasted addresses often carry stray whitespace or trailing newlines,
+    // which would otherwise fail isEmail() for no good reason.
+    body('email').trim().isEmail().withMessage('Valid email required'),
+    validate,
+  ],
+  resendConfirmation
+);
+
+// Exchange a Supabase session (from the confirmation link) for our profile.
+router.post('/customer/session',
+  [body('token').notEmpty().withMessage('token required'), validate],
+  customerSession
 );
 
 // My orders (customer)

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
+import '../config/responsive.dart';
 import '../providers/cart_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
@@ -68,6 +69,127 @@ class _AppNavBarState extends ConsumerState<AppNavBar> {
     _shopOverlay = null;
   }
 
+  /// Mobile slide-out menu. Desktop shows these links inline in the bar,
+  /// phones/tablets get them here.
+  void _showMobileMenu(BuildContext context) {
+    _removeShopOverlay();
+    final catName = (String? name) =>
+        name == null || name.isEmpty ? 'Shop' : name.toUpperCase();
+
+    void go(String path) {
+      Navigator.of(context).pop();
+      context.go(path);
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_categoriesLoaded)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('SHOP',
+                          style: GoogleFonts.manrope(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2,
+                            color: AppColors.tertiary,
+                          )),
+                      const SizedBox(height: 8),
+                      for (final c in _categories)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            catName(c['name'] as String? ?? c['title'] as String?),
+                            style: GoogleFonts.manrope(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.onSurface,
+                            ),
+                          ),
+                          onTap: () => go(
+                              '/products?categoryId=${c['id']}&categoryName=${Uri.encodeComponent(catName(c['name'] as String? ?? c['title'] as String?))}'),
+                        ),
+                    ],
+                  ),
+                ),
+              if (!_categoriesLoaded)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+              const Divider(height: 24),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                title: Text('ALL T-SHIRTS',
+                    style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: AppColors.onSurface)),
+                onTap: () => go('/products'),
+              ),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                title: Text('OUR STORY',
+                    style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: AppColors.onSurface)),
+                onTap: () => go('/about'),
+              ),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                title: Text('WISHLIST',
+                    style: GoogleFonts.manrope(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: AppColors.onSurface)),
+                onTap: () => go('/wishlist'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartCount = ref.watch(cartProvider).fold<int>(0, (s, i) => s + i.quantity);
@@ -75,7 +197,7 @@ class _AppNavBarState extends ConsumerState<AppNavBar> {
     final isWide = MediaQuery.of(context).size.width > 768;
 
     return AppBar(
-      backgroundColor: AppColors.surface.withOpacity(0.95),
+      backgroundColor: AppColors.surface.withValues(alpha: 0.95),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 72,
@@ -125,6 +247,15 @@ class _AppNavBarState extends ConsumerState<AppNavBar> {
             ],
 
             const Spacer(),
+
+            // ── Mobile: hamburger → drawer (desktop shows SHOP / OUR STORY inline)
+            if (!isWide)
+              IconButton(
+                icon: const Icon(Icons.menu, size: 24),
+                onPressed: () => _showMobileMenu(context),
+                color: AppColors.primary,
+                tooltip: 'Menu',
+              ),
 
             // Search
             IconButton(
@@ -205,13 +336,13 @@ class _ShopNavButtonState extends State<_ShopNavButton> {
                     letterSpacing: 1.5,
                     color: _hovered
                         ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.7))),
+                        : AppColors.primary.withValues(alpha: 0.7))),
             const SizedBox(width: 2),
             Icon(Icons.keyboard_arrow_down,
                 size: 16,
                 color: _hovered
                     ? AppColors.primary
-                    : AppColors.primary.withOpacity(0.7)),
+                    : AppColors.primary.withValues(alpha: 0.7)),
           ],
         ),
       ),
@@ -299,10 +430,10 @@ class _ShopMegaMenuState extends State<_ShopMegaMenu>
                       color: AppColors.surfaceLowest,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                          color: AppColors.outlineVariant.withOpacity(0.3)),
+                          color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -319,7 +450,7 @@ class _ShopMegaMenuState extends State<_ShopMegaMenu>
                             border: Border(
                               bottom: BorderSide(
                                   color: AppColors.outlineVariant
-                                      .withOpacity(0.2)),
+                                      .withValues(alpha: 0.2)),
                             ),
                           ),
                           child: Row(children: [
@@ -358,7 +489,7 @@ class _ShopMegaMenuState extends State<_ShopMegaMenu>
                               Container(
                                 width: 1,
                                 height: 220,
-                                color: AppColors.outlineVariant.withOpacity(0.3),
+                                color: AppColors.outlineVariant.withValues(alpha: 0.3),
                                 margin:
                                     const EdgeInsets.symmetric(horizontal: 16),
                               ),
@@ -392,7 +523,7 @@ class _ShopMegaMenuState extends State<_ShopMegaMenu>
                               border: Border(
                                 top: BorderSide(
                                     color: AppColors.outlineVariant
-                                        .withOpacity(0.2)),
+                                        .withValues(alpha: 0.2)),
                               ),
                             ),
                             child: Row(children: [
@@ -461,7 +592,7 @@ class _TypeColumn extends StatelessWidget {
         Container(
             height: 1.5,
             width: 40,
-            color: AppColors.primary.withOpacity(0.3)),
+            color: AppColors.primary.withValues(alpha: 0.3)),
         const SizedBox(height: 12),
 
         // Type list
@@ -611,7 +742,7 @@ class _UserMenu extends StatelessWidget {
         child: Row(children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: AppColors.primary.withOpacity(0.12),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.12),
             child: Text(
               user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
               style: GoogleFonts.manrope(
@@ -646,7 +777,7 @@ class _NavLink extends StatelessWidget {
           style: GoogleFonts.manrope(
               fontSize: 11, fontWeight: FontWeight.w700,
               letterSpacing: 1.5,
-              color: AppColors.primary.withOpacity(0.7))),
+              color: AppColors.primary.withValues(alpha: 0.7))),
     );
   }
 }
@@ -669,61 +800,71 @@ class _ProductCardState extends State<ProductCard> {
     final p = widget.product;
     final imageUrl = p['image_url'];
     final inStock = (p['stock'] ?? 0) > 0;
+    final phone = Responsive.isPhone(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: Stack(fit: StackFit.expand, children: [
-                AnimatedScale(
-                  scale: _hovered ? 1.05 : 1.0,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOutCubic,
-                  child: imageUrl != null
-                      ? Image.network(imageUrl, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder())
-                      : _placeholder(),
-                ),
-                if (!inStock)
-                  Container(
-                    color: Colors.black.withOpacity(0.4),
-                    alignment: Alignment.center,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      color: Colors.white.withOpacity(0.9),
-                      child: Text('SOLD OUT',
-                          style: GoogleFonts.manrope(
-                              fontSize: 10, fontWeight: FontWeight.w800,
-                              letterSpacing: 2,
-                              color: AppColors.onSurface)),
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Fixed 3:4 so every tile in a row lines up. Previously this
+            // was Expanded, which stretched the image on narrow screens
+            // and pushed the name/price out of view.
+            AspectRatio(
+              aspectRatio: Responsive.productImageRatio,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: Stack(fit: StackFit.expand, children: [
+                  AnimatedScale(
+                    scale: _hovered ? 1.05 : 1.0,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    child: imageUrl != null
+                        ? Image.network(imageUrl, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _placeholder())
+                        : _placeholder(),
                   ),
-              ]),
+                  if (!inStock)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        color: Colors.white.withValues(alpha: 0.9),
+                        child: Text('SOLD OUT',
+                            style: GoogleFonts.manrope(
+                                fontSize: 10, fontWeight: FontWeight.w800,
+                                letterSpacing: 2,
+                                color: AppColors.onSurface)),
+                      ),
+                    ),
+                ]),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(p['categories']?['name'] ?? '',
-              style: GoogleFonts.manrope(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5, color: AppColors.tertiary)),
-          const SizedBox(height: 4),
-          Text(p['name'] ?? '',
-              style: GoogleFonts.newsreader(
-                  fontSize: 16, fontWeight: FontWeight.w500,
-                  color: AppColors.onSurface),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          Text('৳ ${(p['price'] ?? 0).toStringAsFixed(0)}',
-              style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.w600,
-                  color: AppColors.onSurfaceVariant)),
-        ]),
+            SizedBox(height: phone ? 8 : 12),
+            if (!phone)
+              Text(p['categories']?['name'] ?? '',
+                  style: GoogleFonts.manrope(
+                      fontSize: 10, fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5, color: AppColors.tertiary)),
+            if (!phone) const SizedBox(height: 4),
+            Text(p['name'] ?? '',
+                style: GoogleFonts.newsreader(
+                    fontSize: phone ? 14 : 16, fontWeight: FontWeight.w500,
+                    color: AppColors.onSurface),
+                maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            Text('৳ ${(p['price'] ?? 0).toStringAsFixed(0)}',
+                style: GoogleFonts.manrope(
+                    fontSize: phone ? 12 : 13, fontWeight: FontWeight.w600,
+                    color: AppColors.onSurfaceVariant)),
+          ],
+        ),
       ),
     );
   }

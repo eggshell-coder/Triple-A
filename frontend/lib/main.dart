@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/theme.dart';
 import 'config/router.dart';
+import 'config/browser_url.dart';
 import 'services/api_service.dart';
+import 'services/auth_redirects.dart';
 
 const _supabaseUrl = 'https://ejuhfwqidjkxahbtvwps.supabase.co';
 const _supabaseAnonKey =
@@ -16,20 +18,41 @@ void main() async {
   await Supabase.initialize(
     url: _supabaseUrl,
     anonKey: _supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      // Supabase's emailed links deliver the session in the URL FRAGMENT
+      // (#access_token=...&type=signup). The default PKCE flow only looks for
+      // ?code= in the query string, so getSessionFromUrl() would fail with
+      // "No code detected in query parameters" and nobody could ever confirm
+      // an email or reset a password. Implicit is what our links use.
+      authFlowType: AuthFlowType.implicit,
+    ),
   );
 
   // Restore persisted admin token so upload/API calls work after page refresh
   await apiService.restoreAdminToken();
 
-  runApp(const ProviderScope(child: TripleAApp()));
+  // If we were opened from an emailed link, Supabase put its token in the
+  // URL fragment. GoRouter's hash strategy would parse that fragment as a
+  // route, fail, and rewrite the hash — destroying the token before any
+  // screen can read it. So capture it and clear the address bar FIRST.
+  final initialLocation = AuthRedirects.detect(Uri.base);
+  if (AuthRedirects.hasFragmentTokens(Uri.base)) {
+    AuthRedirects.pendingCallback = Uri.base;
+    clearUrlFragment();
+  }
+
+  runApp(ProviderScope(
+    child: TripleAApp(initialLocation: initialLocation),
+  ));
 }
 
 class TripleAApp extends ConsumerWidget {
-  const TripleAApp({super.key});
+  final String? initialLocation;
+  const TripleAApp({super.key, this.initialLocation});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
+    final router = ref.watch(routerProvider(initialLocation));
     return MaterialApp.router(
       title: 'Triple A – Clothing Store',
       theme: AppTheme.light,

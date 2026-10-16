@@ -1,8 +1,19 @@
 // lib/config/api_config.dart
 
 class ApiConfig {
+  // Injected at build time so the same source deploys to staging or
+  // production without a code change:
+  //
+  //   flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:5000/api
+  //   flutter build web --dart-define=API_BASE_URL=https://api.example.com/api
+  //
+  // The fallback below is the local dev default, used when the define is
+  // absent (e.g. a plain `flutter run`).
+  static const String _baseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5000/api');
+
   // Backend runs on port 5000 via .env, routes mounted under /api
-  static const String baseUrl = 'https://triple-a-gkpq.onrender.com/api';
+  static const String baseUrl = _baseUrl;
 
   // Endpoints
   static const String login = '$baseUrl/auth/login';

@@ -231,7 +231,27 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 4),
+
+                        // ── Forgot password ─────────────────────────────
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => context
+                                    .go('/forgot-password?audience=admin'),
+                            child: Text(
+                              'Forgot password?',
+                              style: GoogleFonts.manrope(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
 
                         // ── Sign in button ───────────────────────────
                         SizedBox(

@@ -1,5 +1,4 @@
 // lib/config/router.dart
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,12 +10,13 @@ import '../screens/customer/cart_screen.dart';
 import '../screens/customer/checkout_screen.dart';
 import '../screens/customer/order_confirm_screen.dart';
 import '../screens/customer/collection_products_screen.dart';
-import '../screens/customer/about_screen.dart';
 import '../screens/customer/order_tracking_screen.dart';
 import '../screens/customer/login_screen.dart';
 import '../screens/customer/signup_screen.dart';
 import '../screens/customer/my_orders_screen.dart';
 import '../screens/customer/wishlist_screen.dart';
+import '../screens/customer/check_email_screen.dart';
+import '../screens/customer/email_confirmed_screen.dart';
 import '../screens/our_story_screen.dart';
 
 import '../screens/admin/admin_login_screen.dart';
@@ -26,9 +26,21 @@ import '../screens/admin/collection_management_screen.dart';
 import '../screens/admin/order_management_screen.dart';
 import '../screens/admin/admin_wishlist_screen.dart';
 
-final routerProvider = Provider<GoRouter>((ref) {
+import '../screens/auth/forgot_password_screen.dart';
+import '../screens/auth/reset_password_screen.dart';
+import '../services/password_reset_service.dart';
+
+/// Maps the `?audience=` query param onto the enum, defaulting to customer
+/// so a hand-typed /forgot-password still works.
+ResetAudience _audienceOf(GoRouterState state) =>
+    state.uri.queryParameters['audience'] == ResetAudience.admin.name
+        ? ResetAudience.admin
+        : ResetAudience.customer;
+
+final routerProvider = Provider.family<GoRouter, String?>((ref, initialLocation) {
   return GoRouter(
-    initialLocation: '/',
+    // Start on the emailed-link route when one was detected in the URL.
+    initialLocation: initialLocation ?? '/',
 
     onException: (context, state, router) {
       router.go('/login');
@@ -84,6 +96,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/signup',    builder: (_, __) => const SignupScreen()),
       GoRoute(path: '/my-orders', builder: (_, __) => const MyOrdersScreen()),
 
+      // ── Email verification ───────────────────────────────────────────
+      // /check-email   → shown right after signup ("we emailed you")
+      // /email-confirmed → where the emailed link lands (auto sign-in)
+      GoRoute(
+        path: '/check-email',
+        builder: (_, state) => CheckEmailScreen(
+          email: state.uri.queryParameters['email'] ?? '',
+          confirmationRequired:
+              state.uri.queryParameters['required'] != 'false',
+        ),
+      ),
+      GoRoute(
+        path: '/email-confirmed',
+        builder: (_, __) => const EmailConfirmedScreen(),
+      ),
+
       // ── Admin ─────────────────────────────────────────────────────────
       GoRoute(path: '/admin/login',        builder: (_, __) => const AdminLoginScreen()),
       GoRoute(path: '/admin/dashboard',    builder: (_, __) => const AdminDashboardScreen()),
@@ -91,6 +119,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/collections',  builder: (_, __) => const CollectionManagementScreen()),
       GoRoute(path: '/admin/orders',       builder: (_, __) => const OrderManagementScreen()),
       GoRoute(path: '/admin/wishlist',     builder: (_, __) => const AdminWishlistScreen()),
+
+      // ── Password reset ──────────────────────────────────────────────
+      // The emailed link lands on /reset-password; it carries a recovery
+      // session, so these must stay reachable without being signed in.
+      GoRoute(
+        path: '/forgot-password',
+        builder: (_, state) =>
+            ForgotPasswordScreen(audience: _audienceOf(state)),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (_, state) =>
+            ResetPasswordScreen(audience: _audienceOf(state)),
+      ),
     ],
   );
 });

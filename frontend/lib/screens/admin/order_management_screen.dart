@@ -386,7 +386,7 @@ class _StatCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(4)),
               child: Icon(icon, color: AppColors.primary, size: 20),
             ),
@@ -499,7 +499,7 @@ class _ProductOrderCard extends StatelessWidget {
         if (isExpanded) ...[
           Container(
             height: 1,
-            color: AppColors.outlineVariant.withOpacity(0.2),
+            color: AppColors.outlineVariant.withValues(alpha: 0.2),
           ),
           // Customer table header
           Container(
@@ -562,7 +562,7 @@ class _CustomerOrderRow extends StatelessWidget {
       decoration: BoxDecoration(
           border: Border(
               bottom: BorderSide(
-                  color: AppColors.outlineVariant.withOpacity(0.15)))),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.15)))),
       child: Row(children: [
         // Customer name
         Expanded(
@@ -646,7 +646,7 @@ class _InfoBadge extends StatelessWidget {
         padding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(2)),
         child: Text(label,
             style: GoogleFonts.manrope(
@@ -752,7 +752,7 @@ class _OrderRow extends StatelessWidget {
       decoration: BoxDecoration(
           border: Border(
               bottom: BorderSide(
-                  color: AppColors.outlineVariant.withOpacity(0.2)))),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.2)))),
       child: Row(children: [
         Expanded(
             flex: 2,
@@ -985,7 +985,7 @@ class _OrderDetailDialogState extends State<_OrderDetailDialog> {
                           Container(
                               height: 1,
                               color: AppColors.outlineVariant
-                                  .withOpacity(0.3)),
+                                  .withValues(alpha: 0.3)),
                           const SizedBox(height: 10),
                           Row(
                               mainAxisAlignment:

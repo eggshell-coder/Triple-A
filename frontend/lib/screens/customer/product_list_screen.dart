@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/api_service.dart';
+import '../../config/responsive.dart';
 import '../../widgets/shared_widgets.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -186,6 +187,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
           ),
 
+          // ── Result count ───────────────────────────────────────────────
+          if (!_loading && _products.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: Text(
+                _total > 1 ? '$_total products' : '$_total product',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+
           // ── Product grid ───────────────────────────────────────────────
           Expanded(
             child: _loading && _products.isEmpty
@@ -194,79 +209,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     ? const Center(child: Text('No products found.'))
                     : GridView.builder(
                         padding: const EdgeInsets.all(12),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.72,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
+                        gridDelegate: Responsive.productGrid(context),
                         itemCount: _products.length,
-                        itemBuilder: (ctx, i) => _ProductCard(product: _products[i]),
+                        itemBuilder: (ctx, i) {
+                          final p = _products[i];
+                          return ProductCard(
+                            product: p,
+                            onTap: () => context.go('/products/${p['id']}'),
+                          );
+                        },
                       ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProductCard extends StatelessWidget {
-  final dynamic product;
-  const _ProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    final id    = product['id'];
-    final name  = product['name'] as String? ?? '';
-    final price = product['price'];
-    final image = product['image_url'] as String? ?? product['image'] as String?;
-    final type  = product['type'] as String?;
-
-    return GestureDetector(
-      onTap: () => context.go('/products/$id'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                    child: image != null
-                        ? Image.network(image, width: double.infinity, fit: BoxFit.cover)
-                        : Container(color: const Color(0xFFE5E5E5), child: const Icon(Icons.image_outlined, size: 48, color: Colors.grey)),
-                  ),
-                  if (type != null)
-                    Positioned(
-                      top: 8, left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(4)),
-                        child: Text(type, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text('৳$price', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

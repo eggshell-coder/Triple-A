@@ -31,7 +31,7 @@ class AboutScreen extends ConsumerWidget {
                   Image.network(
                     'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1400&q=80',
                     fit: BoxFit.cover,
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withValues(alpha: 0.6),
                     colorBlendMode: BlendMode.multiply,
                     errorBuilder: (_, __, ___) =>
                         Container(color: AppColors.primaryContainer),

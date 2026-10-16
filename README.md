@@ -84,17 +84,18 @@ Edit `.env`:
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
-PORT=3000
+PORT=5000
 NODE_ENV=development
-CORS_ORIGIN=http://localhost:5000
+# Flutter dev server port. Keep this in sync with --web-port below.
+CORS_ORIGIN=http://localhost:3000
 ```
 
 ```bash
 # Start development server
 npm run dev
 
-# Server runs at http://localhost:3000
-# Health check: http://localhost:3000/health
+# Server runs at http://localhost:5000
+# Health check: http://localhost:5000/health
 ```
 
 ---
@@ -108,25 +109,41 @@ cd frontend
 flutter pub get
 ```
 
-Edit `lib/config/api_config.dart`:
-```dart
-static const String baseUrl = 'http://localhost:3000/api';
+The API URL defaults to `http://localhost:5000/api` in
+`lib/config/api_config.dart`. Override it at build time for other
+environments:
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=https://api.example.com/api
 ```
 
 ```bash
-# Run in Chrome (Flutter Web)
-flutter run -d chrome
+# Run in Chrome on a FIXED port.
+# The fixed port matters: Supabase redirects emailed links back to this
+# origin, so a random port would break email confirmation and password
+# reset. Port 3000 is used because the backend already owns 5000.
+flutter run -d chrome --web-port=3000
 
 # Or build for web production
-flutter build web
+flutter build web --release
 ```
+
+**Ports at a glance**
+
+| Service | Port | URL |
+|---------|------|-----|
+| Backend API | 5000 | `http://localhost:5000` |
+| Flutter web  | 3000 | `http://localhost:3000` |
+
+> The backend health check lives at `http://localhost:5000/health`.
+> Opening port 5000 in a browser shows the API's JSON, not the website.
 
 ---
 
 ## 🧪 Testing the Core Flows
 
 ### Customer Flow
-1. Open `http://localhost:5000` (Flutter dev server)
+1. Open `http://localhost:3000` (Flutter dev server)
 2. Browse products on the homepage
 3. Click a product → view details
 4. Click **Add to Cart**
@@ -137,7 +154,7 @@ flutter build web
 9. Order confirmation screen appears with order ID
 
 ### Admin Flow
-1. Go to `http://localhost:5000/#/admin/login`
+1. Go to `http://localhost:3000/#/admin/login`
 2. Log in with your Supabase admin credentials
 3. **Dashboard** – view stats, recent orders
 4. **Products** – click **Add Product**, fill form, save

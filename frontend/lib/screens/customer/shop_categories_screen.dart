@@ -195,11 +195,11 @@ class _CategoryCardState extends State<_CategoryCard> {
             color: widget.bgColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: _hovered ? AppColors.primary : AppColors.outlineVariant.withOpacity(0.4),
+              color: _hovered ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.4),
               width: _hovered ? 1.5 : 1,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(color: AppColors.primary.withOpacity(0.1),
+                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1),
                     blurRadius: 12, offset: const Offset(0, 4))]
                 : [],
           ),

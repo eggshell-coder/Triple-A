@@ -180,7 +180,7 @@ class _LowStockAlertState extends State<_LowStockAlert> {
                         border: Border(
                             bottom: BorderSide(
                                 color: const Color(0xFFFFB74D)
-                                    .withOpacity(0.3)))),
+                                    .withValues(alpha: 0.3)))),
                     child: Row(children: [
                       // Thumbnail
                       Container(
@@ -299,7 +299,7 @@ class _StatsGrid extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4)),
                 child: Icon(icon, color: color, size: 22),
               ),
@@ -361,7 +361,7 @@ class _RevenueCard extends StatelessWidget {
         ]),
         const Spacer(),
         Icon(Icons.trending_up_outlined,
-            color: Colors.white.withOpacity(0.3), size: 80),
+            color: Colors.white.withValues(alpha: 0.3), size: 80),
       ]),
     );
   }
@@ -418,7 +418,7 @@ class _RecentOrdersTable extends StatelessWidget {
                 border: Border(
                     bottom: BorderSide(
                         color:
-                            AppColors.outlineVariant.withOpacity(0.2)))),
+                            AppColors.outlineVariant.withValues(alpha: 0.2)))),
             child: Row(children: [
               _Cell(
                   text: order['id']

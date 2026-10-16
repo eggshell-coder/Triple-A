@@ -36,7 +36,7 @@ class CartScreen extends ConsumerWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: cart.length,
-                    separatorBuilder: (_, __) => Container(height: 1, color: AppColors.outlineVariant.withOpacity(0.2)),
+                    separatorBuilder: (_, __) => Container(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.2)),
                     itemBuilder: (_, i) => _CartItemRow(item: cart[i], ref: ref),
                   );
                   final summary = _OrderSummary(total: total, itemCount: cart.length);
@@ -136,7 +136,7 @@ class _QtyBtn extends StatelessWidget {
     onTap: onTap,
     child: Container(
       width: 28, height: 28,
-      decoration: BoxDecoration(border: Border.all(color: AppColors.outlineVariant.withOpacity(0.5))),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5))),
       child: Icon(icon, size: 14, color: AppColors.onSurface),
     ),
   );
@@ -165,7 +165,7 @@ class _OrderSummary extends ConsumerWidget {
           Text('To be confirmed', style: GoogleFonts.manrope(fontSize: 12, color: AppColors.outline)),
         ]),
         const SizedBox(height: 20),
-        Container(height: 1, color: AppColors.outlineVariant.withOpacity(0.3)),
+        Container(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         const SizedBox(height: 20),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Total', style: GoogleFonts.manrope(fontSize: 16, fontWeight: FontWeight.w700)),

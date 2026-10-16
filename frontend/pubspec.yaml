@@ -41,6 +41,13 @@ dependencies:
   intl: ^0.19.0
   uuid: ^4.4.0
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Referenced by analysis_options.yaml — without it the analyzer warns and
+  # runs with no lint rules at all.
+  flutter_lints: ^4.0.0
+
 flutter:
   uses-material-design: true
 

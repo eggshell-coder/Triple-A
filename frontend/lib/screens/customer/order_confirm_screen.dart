@@ -126,7 +126,7 @@ class _OrderConfirmScreenState extends ConsumerState<OrderConfirmScreen>
                         const SizedBox(height: 12),
                         Container(
                           height: 1,
-                          color: AppColors.outlineVariant.withOpacity(0.3),
+                          color: AppColors.outlineVariant.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 12),
                         Row(

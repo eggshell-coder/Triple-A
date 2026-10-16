@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/responsive.dart';
 import '../../services/api_service.dart';
 import '../../widgets/shared_widgets.dart';
 
@@ -46,8 +47,6 @@ class _NewArrivalsScreenState extends ConsumerState<NewArrivalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: const AppNavBar(showBack: true),
@@ -110,13 +109,15 @@ class _NewArrivalsScreenState extends ConsumerState<NewArrivalsScreen> {
                           ),
                         ),
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(40, 0, 40, 48),
+                          padding: EdgeInsets.fromLTRB(
+                              Responsive.isPhone(context) ? 16 : 40, 0,
+                              Responsive.isPhone(context) ? 16 : 40, 48),
                           sliver: SliverGrid(
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isWide ? 4 : 2,
-                              crossAxisSpacing: 24,
-                              mainAxisSpacing: 24,
+                              crossAxisCount: Responsive.productColumns(context),
+                              crossAxisSpacing: Responsive.isPhone(context) ? 12 : 24,
+                              mainAxisSpacing: Responsive.isPhone(context) ? 12 : 24,
                               childAspectRatio: 0.72,
                             ),
                             delegate: SliverChildBuilderDelegate(
@@ -163,7 +164,7 @@ class _CollectionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withOpacity(0.07)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -231,7 +232,7 @@ class _CollectionCard extends StatelessWidget {
                           : description,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.black.withOpacity(0.55),
+                        color: Colors.black.withValues(alpha: 0.55),
                         height: 1.5,
                       ),
                       maxLines: 3,
@@ -246,13 +247,13 @@ class _CollectionCard extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.5,
-                            color: Colors.black.withOpacity(0.65),
+                            color: Colors.black.withValues(alpha: 0.65),
                           ),
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.arrow_forward,
                             size: 12,
-                            color: Colors.black.withOpacity(0.65)),
+                            color: Colors.black.withValues(alpha: 0.65)),
                       ],
                     ),
                   ],

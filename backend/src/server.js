@@ -29,11 +29,25 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .map((o) => o.trim())
   .filter(Boolean);
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Any localhost / 127.0.0.1 origin (Flutter web picks a random port)
+const isLocalOrigin = (origin) => {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+  } catch {
+    return false;
+  }
+};
+
 const corsOptions = {
   origin(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, same-origin SSR)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Dev convenience: accept any local port (e.g. Flutter's random dev port)
+    if (isDev && isLocalOrigin(origin)) return callback(null, true);
     const err    = new Error(`CORS blocked: ${origin}`);
     err.status   = 403;
     err.code     = 'CORS_BLOCKED';
@@ -134,14 +148,38 @@ app.use((err, req, res, next) => {
 app.use(errorHandler);
 
 // ── Start + Graceful Shutdown ─────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log(`✅  Triple A API running on http://localhost:${PORT}`);
-  console.log(`🌍  Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+let server;
+
+if (require.main === module) {
+  server = app.listen(PORT, () => {
+    console.log(`✅  Triple A API running on http://localhost:${PORT}`);
+    console.log(`🌍  Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+
+  // A raw "EADDRINUSE" stack trace tells you nothing actionable, and it
+  // happens constantly when an old copy of the API is left running.
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`
+❌ Port ${PORT} is already in use.
+
+   Another copy of the API is probably still running.
+   Find and stop it, then try again:
+
+     taskkill /F /IM node.exe
+
+   Or point this instance at a different port in .env:
+     PORT=5001
+`);
+      process.exit(1);
+    }
+    throw err;
+  });
+}
 
 const shutdown = (signal) => {
   console.log(`\n${signal} received — draining connections…`);
-  server.close(() => {
+  server?.close(() => {
     console.log('Server closed cleanly.');
     process.exit(0);
   });
@@ -152,7 +190,9 @@ const shutdown = (signal) => {
   }, 10_000).unref();
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT',  () => shutdown('SIGINT'));
+if (require.main === module) {
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT',  () => shutdown('SIGINT'));
+}
 
 module.exports = app;

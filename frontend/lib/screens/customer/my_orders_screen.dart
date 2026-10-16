@@ -140,7 +140,7 @@ class _OrderCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppColors.surfaceLowest,
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -221,7 +221,7 @@ class _OrderCard extends StatelessWidget {
                           fontSize: 11, color: AppColors.onSurfaceVariant)),
 
                 const SizedBox(height: 12),
-                Container(height: 1, color: AppColors.outlineVariant.withOpacity(0.3)),
+                Container(height: 1, color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                 const SizedBox(height: 12),
 
                 Row(children: [

@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/api_service.dart';
+import '../../config/responsive.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -69,12 +70,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
+                  gridDelegate: Responsive.productGrid(context),
                   itemCount: _items.length,
                   itemBuilder: (ctx, i) {
                     final product = _items[i]['products'] ?? _items[i];
@@ -107,13 +103,15 @@ class _WishlistProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
+            AspectRatio(
+              aspectRatio: Responsive.productImageRatio,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),

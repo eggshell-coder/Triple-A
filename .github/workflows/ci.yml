@@ -1,0 +1,113 @@
+name: CI
+
+# Cancel in-flight runs when a newer commit lands on the same branch.
+# With 30 runs/day this stops you queueing work that is already stale.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # Lint + unit tests for the Express API
+  # ─────────────────────────────────────────────────────────────────────
+  backend:
+    name: Backend (lint + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      # `npm ci` installs exactly what the lockfile pins and fails if
+      # package.json and the lockfile disagree. `npm install` does not.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Dependency audit — separate job so it can run in parallel and so a
+  # new advisory does not block (or get lost inside) the test job.
+  # ─────────────────────────────────────────────────────────────────────
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Audit (high/critical only)
+        run: npm audit --audit-level=high
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Flutter analyze + test + web build
+  # ─────────────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend (analyze + test + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Must be >= 3.27: the code uses Color.withValues(), and
+          # analysis_options.yaml expects flutter_lints ^4.
+          # Pinning an older Flutter here makes the build fail while it
+          # passes locally, which is the worst kind of CI failure.
+          flutter-version: '3.41.6'
+          channel: stable
+          cache: true
+
+      - name: Install packages
+        run: flutter pub get
+
+      # Analyze treats infos as non-fatal but errors/warnings as failures.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-web
+          path: frontend/build/web
+          retention-days: 7

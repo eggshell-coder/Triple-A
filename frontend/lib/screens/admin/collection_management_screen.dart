@@ -293,7 +293,7 @@ class _CollectionRow extends StatelessWidget {
       decoration: BoxDecoration(
           border: Border(
               bottom: BorderSide(
-                  color: AppColors.outlineVariant.withOpacity(0.2)))),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.2)))),
       child: Row(children: [
         Expanded(
             flex: 4,

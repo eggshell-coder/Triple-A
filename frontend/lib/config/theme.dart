@@ -45,7 +45,7 @@ class AppTheme {
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.surface,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface.withOpacity(0.85),
+        backgroundColor: AppColors.surface.withValues(alpha: 0.85),
         foregroundColor: AppColors.primary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -123,10 +123,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
         border: UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.outlineVariant.withOpacity(0.5)),
+          borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
         ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.outlineVariant.withOpacity(0.5)),
+          borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
         ),
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: AppColors.secondary, width: 2),
@@ -139,10 +139,10 @@ class AppTheme {
         color: AppColors.surfaceLowest,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        shadowColor: AppColors.onSurface.withOpacity(0.06),
+        shadowColor: AppColors.onSurface.withValues(alpha: 0.06),
       ),
       dividerTheme: DividerThemeData(
-        color: AppColors.outlineVariant.withOpacity(0.3),
+        color: AppColors.outlineVariant.withValues(alpha: 0.3),
         space: 0,
       ),
       chipTheme: ChipThemeData(

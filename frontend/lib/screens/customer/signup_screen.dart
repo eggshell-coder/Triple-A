@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
+import '../../services/password_reset_service.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/shared_widgets.dart';
 
@@ -41,8 +42,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       setState(() => _error = 'Passwords do not match');
       return;
     }
-    if (_passCtrl.text.length < 6) {
-      setState(() => _error = 'Password must be at least 6 characters');
+    // Same rule set the backend enforces — see auth.controller's validator.
+    final passwordProblem = validateNewPassword(_passCtrl.text);
+    if (passwordProblem != null) {
+      setState(() => _error = passwordProblem);
       return;
     }
 
@@ -54,38 +57,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         password: _passCtrl.text,
         fullName: _nameCtrl.text.trim(),
       );
-      if (data['token'] != null) {
+
+      final token = data['token'] as String?;
+      final needsConfirm = data['email_confirmation_required'] as bool? ?? false;
+
+      if (token != null && !needsConfirm) {
+        // Supabase confirmed the address itself — sign straight in.
         await ref.read(userProvider.notifier).login(
-          data['token'],
-          data['user'] as Map<String, dynamic>,
-        );
+              token,
+              data['user'] as Map<String, dynamic>,
+            );
         if (mounted) context.go('/');
-      } else {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
-              title: Text('Check your email',
-                  style: GoogleFonts.newsreader(fontSize: 20)),
-              content: Text(
-                'We sent a confirmation link to ${_emailCtrl.text.trim()}. '
-                'Please confirm your email then sign in.',
-                style: GoogleFonts.manrope(fontSize: 14, height: 1.6),
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.go('/login');
-                  },
-                  child: const Text('GO TO LOGIN'),
-                ),
-              ],
-            ),
-          );
-        }
+        return;
+      }
+
+      // Verification is outstanding: hand off to a full page, not a dialog,
+      // so the address stays visible and the link can be resent.
+      if (mounted) {
+        context.go(
+          '/check-email'
+          '?email=${Uri.encodeComponent(_emailCtrl.text.trim())}'
+          '&required=$needsConfirm',
+        );
       }
     } catch (e) {
       setState(() => _error = e.toString());
@@ -160,7 +153,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       fontSize: 14, color: AppColors.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Password *',
-                    helperText: 'At least 6 characters',
+                    // Must match the backend rules exactly, otherwise the
+                    // user passes this form and is rejected server-side
+                    // with a message they cannot act on.
+                    helperText: passwordRules.join(' · '),
+                    helperMaxLines: 2,
                     suffixIcon: IconButton(
                       icon: Icon(
                           _obscure

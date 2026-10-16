@@ -1,7 +1,6 @@
 // lib/screens/customer/order_tracking_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
@@ -183,7 +182,7 @@ class _OrderResult extends StatelessWidget {
               const SizedBox(height: 20),
               Container(
                   height: 1,
-                  color: AppColors.outlineVariant.withOpacity(0.3)),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.3)),
               const SizedBox(height: 20),
 
               // Items
@@ -243,7 +242,7 @@ class _OrderResult extends StatelessWidget {
 
               Container(
                   height: 1,
-                  color: AppColors.outlineVariant.withOpacity(0.3)),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
               Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -413,7 +412,7 @@ class _StatusTimeline extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isDone
-                          ? AppColors.completed.withOpacity(0.15)
+                          ? AppColors.completed.withValues(alpha: 0.15)
                           : AppColors.surfaceHigh,
                       border: isActive
                           ? Border.all(

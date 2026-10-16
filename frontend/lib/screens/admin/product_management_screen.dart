@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/admin_sidebar.dart';
 
@@ -248,7 +247,7 @@ class _ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
@@ -347,11 +346,11 @@ class _ActionBtn extends StatelessWidget {
         child: Container(
           width: 30, height: 30,
           decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.92),
+              color: Colors.white.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.12), blurRadius: 4)
+                    color: Colors.black.withValues(alpha: 0.12), blurRadius: 4)
               ]),
           child: Icon(icon, size: 15, color: color),
         ),
@@ -690,7 +689,7 @@ class _AdminProductFormScreenState
             child: Container(
               width: 30, height: 30,
               decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.88),
+                  color: Colors.red.withValues(alpha: 0.88),
                   borderRadius: BorderRadius.circular(6)),
               child: const Icon(Icons.close, color: Colors.white, size: 16),
             ),
@@ -772,7 +771,7 @@ class _AdminProductFormScreenState
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
-              color: color.withOpacity(0.88),
+              color: color.withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(6)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, color: Colors.white, size: 13),

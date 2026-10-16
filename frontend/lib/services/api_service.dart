@@ -136,6 +136,20 @@ class ApiService {
       return body;
     }
 
+    // The validation middleware returns field-level detail alongside the
+    // generic message ("Validation failed"). Showing that verbatim tells the
+    // user nothing, so prefer the specific field message when there is one.
+    final fieldErrors = body['errors'];
+    if (fieldErrors is List && fieldErrors.isNotEmpty) {
+      final first = fieldErrors.first;
+      if (first is Map && first['message'] != null) {
+        throw ApiException(
+          first['message'].toString(),
+          statusCode: response.statusCode,
+        );
+      }
+    }
+
     throw ApiException(
       body['message']?.toString() ??
           body['error']?.toString() ??
@@ -223,6 +237,31 @@ class ApiService {
       setUserToken(data['data']['token'] as String);
     }
     return data['data'];
+  }
+
+  /// Asks the backend to send the "confirm your address" email again.
+  Future<String> resendConfirmation(String email) async {
+    final res = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/auth/customer/resend-confirmation'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+    final data = await _handleResponse(res);
+    return data['message'] as String? ??
+        'If that address needs confirming, a new link is on its way.';
+  }
+
+  /// Trades a Supabase session (from the confirmation link) for our profile.
+  ///
+  /// This is also what writes email_confirmed_at in the database.
+  Future<Map<String, dynamic>> customerSession(String supabaseToken) async {
+    final res = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/auth/customer/session'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': supabaseToken}),
+    );
+    final data = await _handleResponse(res);
+    return data['data'] as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> customerLogin({

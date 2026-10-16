@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/responsive.dart';
 import '../../services/api_service.dart';
 import '../../widgets/shared_widgets.dart';
 
@@ -187,13 +188,7 @@ class _CollectionProductsScreenState
                               vertical: 32,
                             ),
                             sliver: SliverGrid(
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: isWide ? 4 : 2,
-                                crossAxisSpacing: isWide ? 24 : 12,
-                                mainAxisSpacing: isWide ? 32 : 16,
-                                childAspectRatio: 0.68,
-                              ),
+                              gridDelegate: Responsive.productGrid(context),
                               delegate: SliverChildBuilderDelegate(
                                 (ctx, i) {
                                   final p =

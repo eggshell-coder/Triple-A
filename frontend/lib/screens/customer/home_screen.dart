@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/api_service.dart';
+import '../../config/responsive.dart';
 import '../../widgets/shared_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -203,7 +204,7 @@ class _GenderBanner extends StatelessWidget {
             image: NetworkImage(imageUrl),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.4),
+              Colors.black.withValues(alpha: 0.4),
               BlendMode.darken,
             ),
           ),
@@ -422,7 +423,7 @@ class _CollectionSlide extends StatelessWidget {
                     image: NetworkImage(image),
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.35),
+                      Colors.black.withValues(alpha: 0.35),
                       BlendMode.darken,
                     ),
                   )
@@ -495,14 +496,15 @@ class _ProductShowcaseSection extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.72,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
+            gridDelegate: Responsive.productGrid(context),
             itemCount: products.length,
-            itemBuilder: (ctx, i) => _HomeProductCard(product: products[i]),
+            itemBuilder: (ctx, i) {
+              final p = products[i];
+              return ProductCard(
+                product: p,
+                onTap: () => context.go('/products/${p['id']}'),
+              );
+            },
           ),
         if (!loading && products.isNotEmpty)
           Center(
@@ -531,88 +533,6 @@ class _ProductShowcaseSection extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _HomeProductCard extends StatelessWidget {
-  final dynamic product;
-
-  const _HomeProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    final id = product['id'];
-    final name = product['name'] as String? ?? '';
-    final price = product['price'];
-    final image = product['image_url'] as String? ?? product['image'] as String?;
-
-    return GestureDetector(
-      onTap: () => context.go('/products/$id'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(10)),
-                child: image != null
-                    ? Image.network(
-                        image,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        color: const Color(0xFFE5E5E5),
-                        child: const Icon(
-                          Icons.image_outlined,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '৳$price',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
