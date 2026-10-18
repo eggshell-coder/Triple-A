@@ -10,7 +10,8 @@
     "lint:fix": "eslint src/ --fix",
     "test": "node --test --test-force-exit",
     "ci": "npm run lint && npm test",
-    "audit:security": "node scripts/security-audit.cjs"
+    "audit:security": "node scripts/security-audit.cjs",
+    "verify:rls": "node scripts/verify-rls.mjs"
   },
   "engines": {
     "node": ">=18"
