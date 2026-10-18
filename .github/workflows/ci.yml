@@ -73,6 +73,15 @@ jobs:
       - name: Audit (high/critical only)
         run: npm audit --audit-level=high
 
+      # Repository self-audit: committed secrets, route authorisation and
+      # config hygiene. Exits non-zero on a CRITICAL/HIGH finding.
+      #
+      # The Supabase exposure probes are skipped in CI because they need
+      # live credentials, so this covers the code-side surface only. Run
+      # `npm run audit:security` locally for the full picture.
+      - name: Security self-audit
+        run: node scripts/security-audit.cjs
+
   # ─────────────────────────────────────────────────────────────────────
   # Flutter analyze + test + web build
   # ─────────────────────────────────────────────────────────────────────

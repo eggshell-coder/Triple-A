@@ -37,10 +37,9 @@ const placeOrder = async (req, res) => {
     });
   }
 
-  // Temporary debug log — remove after confirming smoke test passes
-  console.log('ORDER IDEMPOTENCY KEY:', idempotencyKey);
-
   // Delegate the entire transaction to a Postgres RPC so it runs atomically.
+  // Idempotency keys are not logged: they are caller-supplied and land in
+  // log aggregation, which is data leakage for no diagnostic benefit.
   const { data, error } = await supabase.rpc('place_order_atomic', {
     p_idempotency_key: idempotencyKey,
     p_user_id:         user_id || null,
