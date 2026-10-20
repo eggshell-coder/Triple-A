@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
-import '../../widgets/shared_widgets.dart';
 
 class PaymentReceiptScreen extends StatefulWidget {
   final String orderId;
@@ -304,9 +302,3 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
     );
   }
 }
-```
-
-Now let me also add the route and update the my_orders screen to show payment info and receipt button.
-
-Let me add the route first.<|end|><|start|>start_tool_call<|channel|>analysis <|constrain|>xml<|message|><rfl:parameter name="path">
-E:\capstone app\triple a\Triple-A\frontend\lib\config\router.dart
