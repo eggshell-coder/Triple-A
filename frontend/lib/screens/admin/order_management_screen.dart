@@ -923,6 +923,57 @@ class _OrderDetailDialogState extends State<_OrderDetailDialog> {
                         ]),
                       ),
                       const SizedBox(height: 16),
+                      // ── Payment info ────────────────────────────────────────
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        color: AppColors.surfaceLow,
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                          Text('PAYMENT',
+                              style: GoogleFonts.manrope(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2,
+                                  color: AppColors.onSurfaceVariant)),
+                          const SizedBox(height: 10),
+                          _InfoRow('Method',
+                              _order!['payment_method'] == 'bkash' ? 'bKash' : 'Cash on Delivery'),
+                          _InfoRow('Status',
+                              _order!['payment_status'] ?? 'pending'),
+                          if (_order!['payment_method'] == 'bkash') ...[
+                            _InfoRow('bKash Txn ID',
+                                _order!['bkash_transaction_id'] ?? '—'),
+                            _InfoRow('bKash Paid To',
+                                _order!['bkash_paid_to'] ?? '—'),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _order!['payment_status'] == 'verified'
+                                  ? null
+                                  : () async {
+                                      try {
+                                        await apiService.verifyPayment(_order!['id'], true);
+                                        _load();
+                                        Navigator.pop(context);
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Error: $e')),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.completed,
+                              ),
+                              child: Text(
+                                _order!['payment_status'] == 'verified'
+                                    ? 'Verified'
+                                    : 'Verify Payment',
+                              ),
+                            ),
+                          ],
+                        ]),
+                      ),
+                      const SizedBox(height: 16),
                       Text('ITEMS',
                           style: GoogleFonts.manrope(
                               fontSize: 10,

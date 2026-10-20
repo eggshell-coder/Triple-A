@@ -9,10 +9,11 @@ const placeOrder = async (req, res) => {
     note,
     delivery_charge = 0,
     user_id,
+    payment_method = 'cash_on_delivery',
+    bkash_transaction_id = null,
+    bkash_paid_to = null,
   } = req.body;
 
-  // req.get() is Express's canonical header accessor — case-insensitive,
-  // works correctly regardless of how the proxy normalises header names.
   const idempotencyKey = req.get('Idempotency-Key');
 
   if (!idempotencyKey) {
@@ -37,9 +38,6 @@ const placeOrder = async (req, res) => {
     });
   }
 
-  // Delegate the entire transaction to a Postgres RPC so it runs atomically.
-  // Idempotency keys are not logged: they are caller-supplied and land in
-  // log aggregation, which is data leakage for no diagnostic benefit.
   const { data, error } = await supabase.rpc('place_order_atomic', {
     p_idempotency_key: idempotencyKey,
     p_user_id:         user_id || null,
@@ -52,6 +50,9 @@ const placeOrder = async (req, res) => {
     p_delivery_charge: Number(delivery_charge),
     p_note:            note || null,
     p_items:           items,
+    p_payment_method:  payment_method,
+    p_bkash_transaction_id: bkash_transaction_id,
+    p_bkash_paid_to:   bkash_paid_to,
   });
 
   if (error) {
@@ -61,7 +62,6 @@ const placeOrder = async (req, res) => {
     return res.status(500).json({ success: false, error: msg });
   }
 
-  // Normalize: RPC may return an array with one row or an object directly
   const result = Array.isArray(data) ? data[0] : data;
 
   return res.status(result.duplicate ? 200 : 201).json({
@@ -75,7 +75,6 @@ const placeOrder = async (req, res) => {
 };
 
 // ── GET /api/auth/customer/my-orders  (customer) ──────────────────────────────
-// NOTE: this function is exported here but mounted on auth.routes.js
 const getMyOrders = async (req, res) => {
   const user_id = req.user?.id;
   if (!user_id) return res.status(401).json({ error: 'Unauthorised' });
@@ -84,6 +83,7 @@ const getMyOrders = async (req, res) => {
     .from('orders')
     .select(`
       id, total_amount, delivery_charge, district, upazila, status, note, created_at,
+      payment_method, payment_status, bkash_transaction_id, bkash_paid_to,
       customers ( full_name, phone, address_line ),
       order_items ( id, quantity, unit_price, products ( id, name, image_url ) )
     `)
@@ -104,6 +104,7 @@ const adminGetOrders = async (req, res) => {
     .from('orders')
     .select(`
       id, total_amount, delivery_charge, district, upazila, status, note, created_at,
+      payment_method, payment_status, bkash_transaction_id, bkash_paid_to,
       customers ( full_name, phone, address_line ),
       order_items ( id, quantity, unit_price, products ( id, name, image_url ) )
     `, { count: 'exact' })
@@ -111,6 +112,10 @@ const adminGetOrders = async (req, res) => {
     .range(from, to);
 
   if (status && status !== 'all') query = query.eq('status', status);
+  // Optional payment filter
+  if (req.query.payment_method && req.query.payment_method !== 'all') {
+    query = query.eq('payment_method', req.query.payment_method);
+  }
 
   const { data, error, count } = await query;
   if (error) return res.status(500).json({ error: error.message });
@@ -123,6 +128,7 @@ const getOrderById = async (req, res) => {
     .from('orders')
     .select(`
       id, total_amount, delivery_charge, district, upazila, status, note, created_at,
+      payment_method, payment_status, bkash_transaction_id, bkash_paid_to,
       customers ( full_name, phone, address_line, email ),
       order_items ( id, quantity, unit_price, products ( id, name, image_url ) )
     `)
@@ -135,14 +141,17 @@ const getOrderById = async (req, res) => {
 
 // ── PATCH /api/orders/:id/status  (admin) ────────────────────────────────────
 const updateOrderStatus = async (req, res) => {
-  const { status } = req.body;
+  const { status, payment_status } = req.body;
   const valid = ['pending','processing','confirmed','shipped','delivered','completed','cancelled'];
   if (!valid.includes(status))
     return res.status(400).json({ error: `status must be one of: ${valid.join(', ')}` });
 
+  const updateData = { status };
+  if (payment_status) updateData.payment_status = payment_status;
+
   const { data, error } = await supabase
     .from('orders')
-    .update({ status })
+    .update(updateData)
     .eq('id', req.params.id)
     .select()
     .single();
@@ -151,8 +160,27 @@ const updateOrderStatus = async (req, res) => {
   return res.json({ success: true, data });
 };
 
+// ── PATCH /api/orders/:id/verify-payment  (admin) ────────────────────────────
+// Admin marks a bKash transaction as verified after checking the bKash app.
+const verifyPayment = async (req, res) => {
+  const { id } = req.params;
+  const { verified = true } = req.body;
+
+  const { data, error } = await supabase
+    .from('orders')
+    .update({
+      payment_status: verified ? 'verified' : 'failed',
+      status: verified ? 'confirmed' : 'pending',
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ success: true, data });
+};
+
 // ── GET /api/orders/revenue-summary  (admin) ──────────────────────────────────
-// Reads from the v_revenue_summary database view — no Node-side aggregation.
 const getRevenueSummary = async (req, res) => {
   const { data, error } = await supabase
     .from('v_revenue_summary')
@@ -166,7 +194,6 @@ const getRevenueSummary = async (req, res) => {
     data: {
       total:       data.total_revenue,
       pending:     data.pending_revenue,
-      // keep legacy 'count' key for backwards compatibility
       count:       data.valid_order_count,
       completed:   data.valid_order_count,
       total_count: data.total_order_count,
@@ -175,7 +202,6 @@ const getRevenueSummary = async (req, res) => {
 };
 
 // ── GET /api/orders/product-summary  (admin) ──────────────────────────────────
-// Reads from the v_product_sales_summary database view.
 const getProductOrdersSummary = async (req, res) => {
   const { data, error } = await supabase
     .from('v_product_sales_summary')
@@ -192,6 +218,7 @@ const trackOrder = async (req, res) => {
     .from('orders')
     .select(`
       id, status, created_at, district, upazila,
+      payment_method, payment_status, bkash_transaction_id,
       customers ( full_name ),
       order_items ( quantity, unit_price, products ( name, image_url ) )
     `)
@@ -208,6 +235,7 @@ module.exports = {
   adminGetOrders,
   getOrderById,
   updateOrderStatus,
+  verifyPayment,
   getRevenueSummary,
   trackOrder,
   getProductOrdersSummary,

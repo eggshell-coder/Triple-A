@@ -10,6 +10,7 @@ const {
   adminGetOrders,
   getOrderById,
   updateOrderStatus,
+  verifyPayment,
   getRevenueSummary,
   getProductOrdersSummary,
 } = require('../controllers/order.controller');
@@ -41,6 +42,10 @@ router.get('/:id',              requireAdmin, getOrderById);
 router.patch('/:id/status',     requireAdmin,
   [body('status').notEmpty().withMessage('Status required'), validate],
   updateOrderStatus
+);
+router.patch('/:id/verify-payment', requireAdmin,
+  [body('verified').optional().isBoolean(), validate],
+  verifyPayment
 );
 
 module.exports = router;

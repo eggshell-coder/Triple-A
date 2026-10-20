@@ -449,6 +449,9 @@ class ApiService {
     double deliveryCharge = 0,
     String? userId,
     String? idempotencyKey,
+    String paymentMethod = 'cash_on_delivery',
+    String? bkashTransactionId,
+    String? bkashPaidTo,
   }) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (idempotencyKey != null) headers['Idempotency-Key'] = idempotencyKey;
@@ -464,9 +467,18 @@ class ApiService {
         'upazila': upazila,
         'delivery_charge': deliveryCharge,
         'user_id': userId,
+        'payment_method': paymentMethod,
+        'bkash_transaction_id': bkashTransactionId,
+        'bkash_paid_to': bkashPaidTo,
       }),
     );
     return _handleResponse(res);
+  }
+
+  Future<Map<String, dynamic>> getBkashNumber() async {
+    // Returns the store's bKash number for "Send Money" payments.
+    // In production this would come from a config endpoint or env.
+    return {'number': '017XXXXXXXX'};
   }
 
   Future<Map<String, dynamic>> trackOrder(String orderId) async {
@@ -510,6 +522,17 @@ class ApiService {
       (h) => http.get(Uri.parse(ApiConfig.orderById(id)), headers: h),
     );
     return _handleResponse(res);
+  }
+
+  Future<void> verifyPayment(String id, bool verified) async {
+    final res = await _adminRequest(
+      (h) => http.patch(
+        Uri.parse('${ApiConfig.orders}/$id/verify-payment'),
+        headers: h,
+        body: jsonEncode({'verified': verified}),
+      ),
+    );
+    await _handleResponse(res);
   }
 
   Future<void> updateOrderStatus(String id, String status) async {
