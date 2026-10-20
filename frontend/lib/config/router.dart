@@ -15,6 +15,7 @@ import '../screens/customer/login_screen.dart';
 import '../screens/customer/signup_screen.dart';
 import '../screens/customer/my_orders_screen.dart';
 import '../screens/customer/wishlist_screen.dart';
+import '../screens/customer/payment_receipt_screen.dart';
 import '../screens/customer/check_email_screen.dart';
 import '../screens/customer/email_confirmed_screen.dart';
 import '../screens/our_story_screen.dart';
@@ -95,6 +96,11 @@ final routerProvider = Provider.family<GoRouter, String?>((ref, initialLocation)
       GoRoute(path: '/login',     builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/signup',    builder: (_, __) => const SignupScreen()),
       GoRoute(path: '/my-orders', builder: (_, __) => const MyOrdersScreen()),
+      GoRoute(
+        path: '/payment-receipt/:orderId',
+        builder: (_, state) =>
+            PaymentReceiptScreen(orderId: state.pathParameters['orderId']!),
+      ),
 
       // ── Email verification ───────────────────────────────────────────
       // /check-email   → shown right after signup ("we emailed you")

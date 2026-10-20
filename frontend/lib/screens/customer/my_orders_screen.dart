@@ -129,6 +129,9 @@ class _OrderCard extends StatelessWidget {
     final deliveryCharge = (order['delivery_charge'] ?? 0).toDouble();
     final district = order['district'] as String?;
     final estimatedDelivery = order['estimated_delivery'] as String?;
+    final paymentMethod = order['payment_method'] as String?;
+    final paymentStatus = order['payment_status'] as String?;
+    final bkashTxnId = order['bkash_transaction_id'] as String?;
     final shortId = (order['id'] ?? '').toString().length >= 8
         ? (order['id'] ?? '').toString().substring(0, 8).toUpperCase()
         : (order['id'] ?? '').toString().toUpperCase();
@@ -281,6 +284,78 @@ class _OrderCard extends StatelessWidget {
                             color: AppColors.primary)),
                   ]),
                 ]),
+              ],
+            ),
+          ),
+          // ── Payment info + Receipt button ──────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLow,
+              border: Border(
+                top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.2)),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Payment method
+                Icon(
+                  paymentMethod == 'bkash' ? Icons.phone_android : Icons.money,
+                  size: 16,
+                  color: paymentMethod == 'bkash' ? Colors.pink : AppColors.completed,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  paymentMethod == 'bkash' ? 'bKash' : 'Cash on Delivery',
+                  style: GoogleFonts.manrope(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Payment status
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: paymentStatus == 'verified'
+                        ? AppColors.completed.withValues(alpha: 0.1)
+                        : AppColors.pending.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    paymentStatus == 'verified' ? 'VERIFIED' : 'PENDING',
+                    style: GoogleFonts.manrope(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: paymentStatus == 'verified'
+                          ? AppColors.completed
+                          : AppColors.pending,
+                    ),
+                  ),
+                ),
+                if (bkashTxnId != null) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Txn: $bkashTxnId',
+                      style: GoogleFonts.manrope(
+                        fontSize: 10,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                TextButton(
+                  onPressed: () => context.go('/payment-receipt/${order['id']}'),
+                  child: Text('RECEIPT',
+                      style: GoogleFonts.manrope(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary)),
+                ),
               ],
             ),
           ),
