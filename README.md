@@ -225,6 +225,50 @@ Based on the **Editorial Heritage** design from Stitch.
 
 ---
 
+## 🐳 Docker Deployment
+
+আপনি পুরো প্রজেক্ট একসাথে ডকারে চালাতে পারেন।
+
+### প্র reactors
+
+১. `backend/.env`-এ নিশ্চিত করুন `CORS_ORIGIN=http://localhost:80`।
+
+২. ফ্লাটার ওয়েব বিল্ড করুন ডকারের জন্য:
+
+```bash
+cd frontend
+flutter build web --release --dart-define=API_BASE_URL=http://localhost:80/api
+cd ..
+```
+
+### ডকারে রান করুন
+
+```bash
+# এর raíz ডিরেক্টরিতে থাকা হলে
+docker-compose up --build
+```
+
+একএক করে চলবে:
+
+| সার্ভিস | URL |
+|--------|-----|
+| Flutter Frontend | `http://localhost:80` |
+| Backend API | `http://localhost:5000` |
+
+বন্ধ করতে:
+
+```bash
+docker-compose down
+```
+
+### শুধু ইমেজ বিল্ড করতে
+
+```bash
+docker-compose build
+```
+
+---
+
 ## 👨‍💻 Author
 
 **Triple A Clothing Business**  
