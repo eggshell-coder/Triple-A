@@ -190,8 +190,8 @@ class _GenderBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     // ── Direct GitHub URLs for high reliability ──
     final String imageUrl = gender == 'men'
-        ? 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/mens_bg.jpg'
-        : 'https://raw.githubusercontent.com/SarafatAlamIrfan/Triple-A/main/frontend/assets/images/womens_bg.jpg';
+        ? 'https://ejuhfwqidjkxahbtvwps.supabase.co/storage/v1/object/public/product-images/products/1776774488218-qxed2hca9.jpeg'
+        : 'https://ejuhfwqidjkxahbtvwps.supabase.co/storage/v1/object/public/product-images/products/1776774333416-uvk5ilwkr.jpeg';
 
     return GestureDetector(
       onTap: () => context.go('/products?gender=$gender'),
@@ -408,7 +408,10 @@ class _CollectionSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final slug = collection['slug'] as String;
     final name = collection['name'] as String;
-    final image = collection['image'] as String?;
+    final rawImage = (collection['image'] ?? collection['image_url']) as String?;
+    final image = (rawImage != null && rawImage.trim().isNotEmpty)
+        ? rawImage.trim()
+        : 'https://ejuhfwqidjkxahbtvwps.supabase.co/storage/v1/object/public/product-images/products/1776797935323-8sq6ggfer.png';
 
     return GestureDetector(
       onTap: () => context.go('/collections/$slug'),
