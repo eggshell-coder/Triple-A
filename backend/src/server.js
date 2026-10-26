@@ -20,6 +20,11 @@ const errorHandler      = require('./middleware/error.middleware');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// Vercel terminates the public connection in its trusted proxy layer.
+// Trust one proxy hop so express-rate-limit can use the forwarded client IP
+// without trusting arbitrary client-supplied forwarding chains.
+app.set('trust proxy', 1);
+
 // ── Security ──────────────────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
