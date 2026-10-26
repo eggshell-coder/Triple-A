@@ -798,7 +798,10 @@ class _ProductCardState extends State<ProductCard> {
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
-    final imageUrl = p['image_url'];
+    final rawImageUrl = p['image_url'] ?? p['image'];
+    final imageUrl = rawImageUrl is String && rawImageUrl.trim().isNotEmpty
+        ? rawImageUrl.trim()
+        : null;
     final inStock = (p['stock'] ?? 0) > 0;
     final phone = Responsive.isPhone(context);
 
