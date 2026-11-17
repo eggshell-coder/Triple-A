@@ -3,6 +3,7 @@ const express  = require('express');
 const router   = express.Router();
 const { body } = require('express-validator');
 const { validate }      = require('../middleware/validate.middleware');
+const { optionalAuthenticate } = require('../middleware/auth.middleware');
 const { requireAdmin }  = require('../middleware/adminAuth');
 const {
   placeOrder,
@@ -21,6 +22,7 @@ const orderLimiter = (req, res, next) => req.app.locals.orderLimiter(req, res, n
 // ── Public ────────────────────────────────────────────────────────────────────
 router.post('/',
   orderLimiter,
+  optionalAuthenticate,
   [
     body('customer.full_name').trim().notEmpty().withMessage('Full name required'),
     body('customer.phone').trim().notEmpty().withMessage('Phone number required'),

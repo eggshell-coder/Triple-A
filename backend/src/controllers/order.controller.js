@@ -8,7 +8,6 @@ const placeOrder = async (req, res) => {
     items,
     note,
     delivery_charge = 0,
-    user_id,
     payment_method = 'cash_on_delivery',
     bkash_transaction_id = null,
     bkash_paid_to = null,
@@ -40,13 +39,15 @@ const placeOrder = async (req, res) => {
 
   const { data, error } = await supabase.rpc('place_order_atomic', {
     p_idempotency_key: idempotencyKey,
-    p_user_id:         user_id || null,
+    // Never trust an account ID supplied in the request body. Authenticated
+    // orders are linked only to the user verified by optionalAuthenticate.
+    p_user_id:         req.user?.id || null,
     p_full_name:       fullName,
     p_phone:           phone,
     p_district:        district,
     p_upazila:         upazila,
     p_address_line:    addressLine,
-    p_email:           email,
+    p_email:           req.user?.email || email,
     p_delivery_charge: Number(delivery_charge),
     p_note:            note || null,
     p_items:           items,

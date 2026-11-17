@@ -501,31 +501,31 @@ class ApiService {
     String? district,
     String? upazila,
     double deliveryCharge = 0,
-    String? userId,
     String? idempotencyKey,
     String paymentMethod = 'cash_on_delivery',
     String? bkashTransactionId,
     String? bkashPaidTo,
   }) async {
-    final headers = <String, String>{'Content-Type': 'application/json'};
-    if (idempotencyKey != null) headers['Idempotency-Key'] = idempotencyKey;
+    final headers = <String, String>{
+      ..._userHeaders,
+      if (idempotencyKey != null) 'Idempotency-Key': idempotencyKey,
+    };
 
-    final res = await http.post(
-      Uri.parse(ApiConfig.orders),
-      headers: headers,
-      body: jsonEncode({
-        'customer': customer,
-        'items': items,
-        'note': note,
-        'district': district,
-        'upazila': upazila,
-        'delivery_charge': deliveryCharge,
-        'user_id': userId,
-        'payment_method': paymentMethod,
-        'bkash_transaction_id': bkashTransactionId,
-        'bkash_paid_to': bkashPaidTo,
-      }),
-    );
+    final res = await _customerRequest((authHeaders) => http.post(
+          Uri.parse(ApiConfig.orders),
+          headers: {...headers, ...authHeaders},
+          body: jsonEncode({
+            'customer': customer,
+            'items': items,
+            'note': note,
+            'district': district,
+            'upazila': upazila,
+            'delivery_charge': deliveryCharge,
+            'payment_method': paymentMethod,
+            'bkash_transaction_id': bkashTransactionId,
+            'bkash_paid_to': bkashPaidTo,
+          }),
+        ));
     return _handleResponse(res);
   }
 

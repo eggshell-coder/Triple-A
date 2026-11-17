@@ -93,7 +93,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         note:           _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         district:       _selectedDistrict,
         upazila:        _selectedUpazila,
-        userId:         user.userId,
         idempotencyKey: _idempotencyKey,
         paymentMethod: _paymentMethod,
         bkashTransactionId: _paymentMethod == 'bkash' ? _bkashTxnCtrl.text.trim() : null,
