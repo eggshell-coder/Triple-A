@@ -1,12 +1,13 @@
 // src/controllers/auth.controller.js
 const supabase = require('../config/supabase');
+const supabaseAuth = supabase.authClient || supabase;
 const { createError } = require('../middleware/error.middleware');
 
 // ── Admin login ───────────────────────────────────────────────────────────────
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
     if (error) return next(createError('Invalid credentials', 401));
 
     const { data: adminProfile, error: profileError } = await supabase
@@ -28,7 +29,7 @@ const login = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    await supabase.auth.signOut();
+    await supabaseAuth.auth.signOut();
     res.json({ success: true, message: 'Logged out' });
   } catch (err) { next(err); }
 };
@@ -39,7 +40,7 @@ const refreshAdminToken = async (req, res, next) => {
     const { refresh_token } = req.body;
     if (!refresh_token) return next(createError('refresh_token required', 400));
 
-    const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+    const { data, error } = await supabaseAuth.auth.refreshSession({ refresh_token });
     if (error || !data.session)
       return next(createError('Session expired – please log in again', 401));
 
@@ -158,7 +159,7 @@ const customerSignup = async (req, res, next) => {
 
       // admin.createUser never returns a session, so mint one now. This is
       // what lets the app go straight to the homepage.
-      const signedIn = await supabase.auth.signInWithPassword({ email, password });
+      const signedIn = await supabaseAuth.auth.signInWithPassword({ email, password });
       if (signedIn.error || !signedIn.data?.session) {
         // The account exists and is confirmed; the user can simply log in.
         return next(createError('Account created. Please sign in.', 401));
@@ -169,7 +170,7 @@ const customerSignup = async (req, res, next) => {
         session: signedIn.data.session,
       };
     } else {
-      const signedUp = await supabase.auth.signUp({
+      const signedUp = await supabaseAuth.auth.signUp({
         email,
         password,
         options: {
@@ -213,7 +214,7 @@ const resendConfirmation = async (req, res, next) => {
 
     // Always answer 200. Reporting "no such user" would let anyone probe
     // which addresses have accounts.
-    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    const { error } = await supabaseAuth.auth.resend({ type: 'signup', email });
     if (error) console.warn('resend failed:', error.message);
 
     res.json({
@@ -232,7 +233,7 @@ const customerSession = async (req, res, next) => {
     const { token } = req.body;
     if (!token) return next(createError('token required', 400));
 
-    const { data, error } = await supabase.auth.getUser(token);
+    const { data, error } = await supabaseAuth.auth.getUser(token);
     if (error || !data?.user) return next(createError('Invalid or expired session', 401));
 
     // Re-sync so clicking the link is what flips email_confirmed_at in the DB.
@@ -250,7 +251,7 @@ const customerSession = async (req, res, next) => {
 const customerLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
     if (error) return next(createError('Invalid email or password', 401));
 
     // Keep the mirror row in step on every login — this is what marks an
