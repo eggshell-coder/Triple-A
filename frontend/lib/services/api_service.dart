@@ -20,6 +20,7 @@ class ApiService {
   String? _token;
   String? _refreshToken;
   String? _userToken;
+  String? _userRefreshToken;
 
   // ─── Admin token management ──────────────────────────────────────────────
 
@@ -101,8 +102,55 @@ class ApiService {
 
   // ─── Customer token management ───────────────────────────────────────────
 
-  void setUserToken(String token) => _userToken = token;
-  void clearUserToken() => _userToken = null;
+  void setUserToken(String token, {String? refreshToken}) {
+    _userToken = token;
+    if (refreshToken != null) _userRefreshToken = refreshToken;
+  }
+
+  void clearUserToken() {
+    _userToken = null;
+    _userRefreshToken = null;
+  }
+
+  Future<bool> _refreshCustomerSession() async {
+    final refreshToken = _userRefreshToken;
+    if (refreshToken == null) return false;
+
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/auth/customer/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+      if (res.statusCode != 200) return false;
+
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final data = body['data'] as Map<String, dynamic>;
+      _userToken = data['token'] as String;
+      _userRefreshToken = data['refresh_token'] as String? ?? refreshToken;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('customer_token', _userToken!);
+      await prefs.setString('customer_refresh_token', _userRefreshToken!);
+      final user = data['user'];
+      if (user is Map<String, dynamic>) {
+        await prefs.setString('customer_user', jsonEncode(user));
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<http.Response> _customerRequest(
+    Future<http.Response> Function(Map<String, String> headers) request,
+  ) async {
+    var res = await request(_userHeaders);
+    if (res.statusCode == 401 && await _refreshCustomerSession()) {
+      res = await request(_userHeaders);
+    }
+    return res;
+  }
 
   // ─── Headers ────────────────────────────────────────────────────────────
 
@@ -234,7 +282,10 @@ class ApiService {
 
     final data = await _handleResponse(res);
     if (data['data'] != null && data['data']['token'] != null) {
-      setUserToken(data['data']['token'] as String);
+      setUserToken(
+        data['data']['token'] as String,
+        refreshToken: data['data']['refresh_token'] as String?,
+      );
     }
     return data['data'];
   }
@@ -275,17 +326,20 @@ class ApiService {
     );
 
     final data = await _handleResponse(res);
-    setUserToken(data['data']['token'] as String);
+    setUserToken(
+      data['data']['token'] as String,
+      refreshToken: data['data']['refresh_token'] as String?,
+    );
     return data['data'];
   }
 
   // ─── My Orders ───────────────────────────────────────────────────────────
 
   Future<List<dynamic>> getMyOrders() async {
-    final res = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/auth/customer/my-orders'),
-      headers: _userHeaders,
-    );
+    final res = await _customerRequest((headers) => http.get(
+          Uri.parse('${ApiConfig.baseUrl}/auth/customer/my-orders'),
+          headers: headers,
+        ));
 
     final data = await _handleResponse(res);
     return (data['data'] as List<dynamic>?) ?? [];
@@ -634,29 +688,29 @@ class ApiService {
   // ─── Wishlist (customer) ─────────────────────────────────────────────────
 
   Future<bool> toggleWishlist(String productId) async {
-    final res = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/wishlist/toggle'),
-      headers: _userHeaders,
-      body: jsonEncode({'product_id': productId}),
-    );
+    final res = await _customerRequest((headers) => http.post(
+          Uri.parse('${ApiConfig.baseUrl}/wishlist/toggle'),
+          headers: headers,
+          body: jsonEncode({'product_id': productId}),
+        ));
     final data = await _handleResponse(res);
     return data['wishlisted'] as bool;
   }
 
   Future<bool> checkWishlist(String productId) async {
-    final res = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/wishlist/check/$productId'),
-      headers: _userHeaders,
-    );
+    final res = await _customerRequest((headers) => http.get(
+          Uri.parse('${ApiConfig.baseUrl}/wishlist/check/$productId'),
+          headers: headers,
+        ));
     final data = await _handleResponse(res);
     return data['wishlisted'] as bool;
   }
 
   Future<List<dynamic>> getMyWishlist() async {
-    final res = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/wishlist/my'),
-      headers: _userHeaders,
-    );
+    final res = await _customerRequest((headers) => http.get(
+          Uri.parse('${ApiConfig.baseUrl}/wishlist/my'),
+          headers: headers,
+        ));
     final data = await _handleResponse(res);
     if (data['data'] != null) return data['data'] as List<dynamic>;
     return [];

@@ -199,6 +199,7 @@ const customerSignup = async (req, res, next) => {
         : 'Account created — check your email to confirm it',
       data: {
         token:   data.session?.access_token || null,
+        refresh_token: data.session?.refresh_token || null,
         user,
         email_confirmation_required: !signedInImmediately,
         email_confirmed: Boolean(data.user.email_confirmed_at) || signedInImmediately,
@@ -272,6 +273,31 @@ const customerLogin = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// ── Refresh customer session ─────────────────────────────────────────────────
+const refreshCustomerToken = async (req, res, next) => {
+  try {
+    const { refresh_token } = req.body;
+    if (!refresh_token) return next(createError('refresh_token required', 400));
+
+    const { data, error } = await supabaseAuth.auth.refreshSession({ refresh_token });
+    if (error || !data.session || !data.user) {
+      return next(createError('Session expired – please sign in again', 401));
+    }
+
+    const user = await syncProfile(data.user);
+    if (!user) return next(createError('No customer account found', 403));
+
+    return res.json({
+      success: true,
+      data: {
+        token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        user,
+      },
+    });
+  } catch (err) { next(err); }
+};
+
 // ── My orders (customer — paginated) ─────────────────────────────────────────
 const getMyOrders = async (req, res, next) => {
   try {
@@ -311,6 +337,7 @@ module.exports = {
   refreshAdminToken,
   customerSignup,
   customerLogin,
+  refreshCustomerToken,
   resendConfirmation,
   customerSession,
   getMyOrders,

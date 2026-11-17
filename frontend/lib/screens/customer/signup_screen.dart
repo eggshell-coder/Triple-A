@@ -66,6 +66,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         await ref.read(userProvider.notifier).login(
               token,
               data['user'] as Map<String, dynamic>,
+              refreshToken: data['refresh_token'] as String?,
             );
         if (mounted) context.go('/');
         return;

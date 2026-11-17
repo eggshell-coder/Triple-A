@@ -50,6 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(userProvider.notifier).login(
         data['token'],
         data['user'] as Map<String, dynamic>,
+        refreshToken: data['refresh_token'] as String?,
       );
 
       if (mounted) context.go('/');

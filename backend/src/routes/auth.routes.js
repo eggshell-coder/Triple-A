@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth.middleware');
 const {
   login, logout, refreshAdminToken,
   customerSignup, customerLogin,
+  refreshCustomerToken,
   resendConfirmation, customerSession,
   getMyOrders,
 } = require('../controllers/auth.controller');
@@ -50,6 +51,11 @@ router.post('/customer/login',
   loginLimiter,
   [body('email').isEmail(), body('password').notEmpty(), validate],
   customerLogin
+);
+
+router.post('/customer/refresh',
+  [body('refresh_token').notEmpty().withMessage('refresh_token required'), validate],
+  refreshCustomerToken
 );
 
 // ── Email verification ───────────────────────────────────────────────────────

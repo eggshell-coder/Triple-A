@@ -111,6 +111,7 @@ class _EmailConfirmedScreenState extends ConsumerState<EmailConfirmedScreen> {
       await ref.read(userProvider.notifier).login(
             session.accessToken,
             user,
+            refreshToken: session.refreshToken,
           );
 
       if (mounted) {
